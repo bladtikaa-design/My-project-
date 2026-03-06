@@ -93,7 +93,7 @@ window.login=function(){
         avatar=reader.result; 
         localStorage.setItem("username",username); 
         localStorage.setItem("avatar",avatar); 
-        location.reload(); 
+        afterLogin();
     }
     reader.readAsDataURL(file);
 }
@@ -110,7 +110,6 @@ function afterLogin(){
     startRealtime();
     startCamera();
 }
-if(username) afterLogin();
 
 // ---------------- Posts ----------------
 window.post=async function(){
@@ -219,4 +218,13 @@ onSnapshot(collection(db,"calls"), snapshot=>{
                 await peerConnection.setRemoteDescription(new RTCSessionDescription(data.offer));
                 const answer = await peerConnection.createAnswer();
                 await peerConnection.setLocalDescription(answer);
-                await setDoc(change.doc.ref,{answer:answer.toJSON(),
+                await setDoc(change.doc.ref,{answer:answer.toJSON(),status:"accepted"},{merge:true});
+                peerConnection.ontrack=event=>{ document.getElementById("callVideo").srcObject=event.streams[0]; };
+            };
+        }
+    });
+});
+</script>
+
+</body>
+</html>
