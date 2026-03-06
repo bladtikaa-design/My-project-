@@ -18,25 +18,7 @@ const db = getFirestore(app);
 let username = localStorage.getItem("username");
 let avatar = localStorage.getItem("avatar");
 
-if(username){
-    document.getElementById("login").style.display="none";
-    document.getElementById("app").style.display="block";
-    document.getElementById("user").innerText=username;
-    document.getElementById("myavatar").src=avatar;
-}
-
-// ----------------- Profile / Chat / Calls -----------------
-let localStream;
-let peerConnection;
-const servers = { iceServers:[{urls:"stun:stun.l.google.com:19302"}] };
-
-// старт камеры
-async function startCamera(){
-    localStream = await navigator.mediaDevices.getUserMedia({video:true,audio:true});
-}
-startCamera();
-
-// окно профиля и DM
+// ----------------- окно профиля -----------------
 const profileDiv = document.createElement("div");
 profileDiv.id = "profileDiv";
 profileDiv.style.cssText = "display:none;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:#222;color:white;padding:15px;border-radius:10px;z-index:1000;font-family:sans-serif;width:300px;";
@@ -51,24 +33,100 @@ profileDiv.innerHTML = `
 `;
 document.body.appendChild(profileDiv);
 
-// ----------------- Логика открытия профиля -----------------
-let activeProfile = "";
 let messages = {};
+let activeProfile = "";
 
+// ----------------- функции открытия профиля -----------------
 window.openProfile = function(user){
     activeProfile = user;
     document.getElementById("profileDiv").style.display="block";
     document.getElementById("profileNick").innerText = user;
-
     if(!messages[user]) messages[user] = [];
     updateDM();
-
 };
 
 document.getElementById("closeProfile").onclick = ()=>{
     document.getElementById("profileDiv").style.display="none";
     document.getElementById("callVideo").style.display="none";
 };
+
+// ----------------- логика входа -----------------
+window.login=function(){
+    username=document.getElementById("nickname").value;
+    let file=document.getElementById("avatarInput").files[0];
+    let reader=new FileReader();
+    reader.onload=function(){
+        avatar=reader.result;
+        localStorage.setItem("username",username);
+        localStorage.setItem("avatar",avatar);
+        location.reload();
+    }
+    reader.readAsDataURL(file);
+}
+
+// ----------------- после входа -----------------
+function afterLogin(){
+    document.getElementById("login").style.display="none";
+    document.getElementById("app").style.display="block";
+    document.getElementById("user").innerText=username;
+    document.getElementById("myavatar").src=avatar;
+
+    // DEVELOPER
+    if(username==="bladtikaa-design"){
+        document.getElementById("user").innerHTML += ' <span style="color:red;font-weight:bold;">DEVELOPER</span> <span style="background:black;color:red;border-radius:50%;padding:3px 6px;">✔</span>';
+    }
+
+    startRealtime();
+}
+if(username) afterLogin();
+
+// ----------------- функционал постов -----------------
+window.post=async function(){
+    let text=document.getElementById("text").value;
+    let photoFile=document.getElementById("photo").files[0];
+    let photo="";
+    if(photoFile){
+        let reader=new FileReader();
+        reader.onload=async function(){
+            photo=reader.result;
+            await addDoc(collection(db,"posts"),{user:username,avatar:avatar,text:text,photo:photo,like:0});
+        }
+        reader.readAsDataURL(photoFile);
+    } else{
+        await addDoc(collection(db,"posts"),{user:username,avatar:avatar,text:text,photo:"",like:0});
+    }
+}
+
+function startRealtime(){
+    onSnapshot(collection(db,"posts"),(snapshot)=>{
+        document.getElementById("posts").innerHTML="";
+        snapshot.forEach((docSnap)=>{
+            let data=docSnap.data();
+            let div=document.createElement("div");
+            div.className="post";
+
+            let img="";
+            if(data.photo) img="<img class='postimg' src='"+data.photo+"'>";
+
+            let del="";
+            if(data.user==username) del="<button class='delete' onclick='delPost(\""+docSnap.id+"\")'>🗑</button>";
+
+            div.innerHTML = del + "<img class='avatar' src='"+data.avatar+"' style='cursor:pointer' onclick='openProfile(\""+data.user+"\")'> <b style='cursor:pointer' onclick='openProfile(\""+data.user+"\")'>"+data.user+"</b><br>"+ data.text+"<br>"+img + "<br><button onclick='like(\""+docSnap.id+"\","+data.like+")'>👍 "+data.like+"</button>";
+            document.getElementById("posts").prepend(div);
+        })
+    });
+}
+
+window.like=async function(id,count){
+    let ref=doc(db,"posts",id);
+    await updateDoc(ref,{like:count+1});
+}
+window.delPost=async function(id){
+    await deleteDoc(doc(db,"posts",id));
+}
+window.theme=function(){
+    document.body.classList.toggle("dark");
+}
 
 // ----------------- Direct Messages -----------------
 document.getElementById("dmSend").onclick = async ()=>{
@@ -89,13 +147,12 @@ function updateDM(){
     box.scrollTop = box.scrollHeight;
 }
 
-// слушаем сообщения
 onSnapshot(collection(db,"messages"), snapshot=>{
     snapshot.docChanges().forEach(change=>{
         const data = change.doc.data();
         if((data.from===username && data.to) || (data.to===username && data.from)){
-            if(!messages[data.from]) messages[data.from] = [];
-            if(!messages[data.to]) messages[data.to] = [];
+            if(!messages[data.from]) messages[data.from]=[];
+            if(!messages[data.to]) messages[data.to]=[];
             if(data.to===username) messages[data.from].push(data);
             else messages[data.to].push(data);
             if(activeProfile===data.from || activeProfile===data.to) updateDM();
@@ -104,6 +161,15 @@ onSnapshot(collection(db,"messages"), snapshot=>{
 });
 
 // ----------------- Звонки -----------------
+let localStream;
+let peerConnection;
+const servers = { iceServers:[{urls:"stun:stun.l.google.com:19302"}] };
+
+async function startCamera(){
+    localStream = await navigator.mediaDevices.getUserMedia({video:true,audio:true});
+}
+startCamera();
+
 document.getElementById("callUserBtn").onclick = async ()=>{
     const callee = activeProfile;
     if(!callee) return;
@@ -135,7 +201,6 @@ document.getElementById("callUserBtn").onclick = async ()=>{
     };
 };
 
-// слушаем входящие звонки
 onSnapshot(collection(db,"calls"), snapshot=>{
     snapshot.docChanges().forEach(change=>{
         const data = change.doc.data();
@@ -158,68 +223,4 @@ onSnapshot(collection(db,"calls"), snapshot=>{
         }
     });
 });
-
-// ----------------- DEVELOPER -----------------
-if(username==="bladtikaa-design"){
-    document.getElementById("user").innerHTML += ' <span style="color:red;font-weight:bold;">DEVELOPER</span> <span style="background:black;color:red;border-radius:50%;padding:3px 6px;">✔</span>';
-}
-
-// ----------------- Старый функционал постов -----------------
-window.login=function(){
-    username=document.getElementById("nickname").value;
-    let file=document.getElementById("avatarInput").files[0];
-    let reader=new FileReader();
-    reader.onload=function(){
-        avatar=reader.result;
-        localStorage.setItem("username",username);
-        localStorage.setItem("avatar",avatar);
-        location.reload();
-    }
-    reader.readAsDataURL(file);
-}
-
-window.post=async function(){
-    let text=document.getElementById("text").value;
-    let photoFile=document.getElementById("photo").files[0];
-    let photo="";
-    if(photoFile){
-        let reader=new FileReader();
-        reader.onload=async function(){
-            photo=reader.result;
-            await addDoc(collection(db,"posts"),{user:username,avatar:avatar,text:text,photo:photo,like:0});
-        }
-        reader.readAsDataURL(photoFile);
-    } else{
-        await addDoc(collection(db,"posts"),{user:username,avatar:avatar,text:text,photo:"",like:0});
-    }
-}
-
-onSnapshot(collection(db,"posts"),(snapshot)=>{
-    document.getElementById("posts").innerHTML="";
-    snapshot.forEach((docSnap)=>{
-        let data=docSnap.data();
-        let div=document.createElement("div");
-        div.className="post";
-
-        let img="";
-        if(data.photo) img="<img class='postimg' src='"+data.photo+"'>";
-
-        let del="";
-        if(data.user==username) del="<button class='delete' onclick='delPost(\""+docSnap.id+"\")'>🗑</button>";
-
-        div.innerHTML = del + "<img class='avatar' src='"+data.avatar+"' style='cursor:pointer' onclick='openProfile(\""+data.user+"\")'> <b style='cursor:pointer' onclick='openProfile(\""+data.user+"\")'>"+data.user+"</b><br>"+ data.text+"<br>"+img + "<br><button onclick='like(\""+docSnap.id+"\","+data.like+")'>👍 "+data.like+"</button>";
-        document.getElementById("posts").prepend(div);
-    })
-})
-
-window.like=async function(id,count){
-    let ref=doc(db,"posts",id);
-    await updateDoc(ref,{like:count+1});
-}
-window.delPost=async function(id){
-    await deleteDoc(doc(db,"posts",id));
-}
-window.theme=function(){
-    document.body.classList.toggle("dark");
-}
 </script>
