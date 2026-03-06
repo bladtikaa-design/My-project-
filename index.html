@@ -1,142 +1,260 @@
 <!DOCTYPE html>
 <html>
 <head>
+<meta charset="UTF-8">
 <title>My Social</title>
 
 <style>
+
 body{
 font-family:sans-serif;
 background:#f0f0f0;
 text-align:center;
+margin:0;
 }
 
 #top{
 background:white;
 padding:10px;
-margin-bottom:10px;
 }
 
 .post{
 background:white;
-margin:10px;
+margin:10px auto;
 padding:10px;
 border-radius:10px;
+max-width:400px;
+position:relative;
 }
 
-img{
-max-width:200px;
+.avatar{
+width:40px;
+height:40px;
+border-radius:50%;
+object-fit:cover;
+}
+
+.postimg{
+max-width:100%;
 border-radius:10px;
 margin-top:5px;
 }
 
-button{
-margin:3px;
+.delete{
+position:absolute;
+top:5px;
+right:5px;
+border:none;
+background:red;
+color:white;
+border-radius:10px;
+cursor:pointer;
 }
-</style>
 
+.dark{
+background:#111;
+color:white;
+}
+
+.dark .post{
+background:#1e1e1e;
+}
+
+</style>
 </head>
 
 <body>
 
 <div id="login">
-<h2>Write your nickname</h2>
-<input id="nickname">
+
+<h2>Nickname</h2>
+
+<input id="nickname"><br><br>
+<input type="file" id="avatarInput"><br><br>
+
 <button onclick="login()">Enter</button>
+
 </div>
 
 <div id="app" style="display:none">
 
 <div id="top">
+
+<img id="myavatar" class="avatar">
 <b id="user"></b>
+
+<button onclick="theme()">🌙</button>
+
 </div>
 
-<input id="text" placeholder="Write post">
-<input type="file" id="photo">
 <br>
+
+<input id="text" placeholder="Write post"><br><br>
+<input type="file" id="photo"><br><br>
+
 <button onclick="post()">Post</button>
 
 <div id="posts"></div>
 
 </div>
 
-<script>
+<script type="module">
 
-let username=""
-let postCount=0
-let today=new Date().toDateString()
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app.js";
+import { getFirestore, collection, addDoc, onSnapshot, updateDoc, doc, deleteDoc } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js";
 
-function login(){
-username=document.getElementById("nickname").value
-if(username=="")return
+const firebaseConfig = {
+apiKey: "AIzaSyAE46eiz4XltTwoPz4mVFG6kvPqAIhVf10",
+authDomain: "mysocial-dabdf.firebaseapp.com",
+projectId: "mysocial-dabdf",
+storageBucket: "mysocial-dabdf.firebasestorage.app",
+messagingSenderId: "812073291348",
+appId: "1:812073291348:web:e68dbf6c412c72de5aa7c1",
+measurementId: "G-24XWVXT1HV"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+let username=localStorage.getItem("username")
+let avatar=localStorage.getItem("avatar")
+
+if(username){
 
 document.getElementById("login").style.display="none"
 document.getElementById("app").style.display="block"
-document.getElementById("user").innerText="Logged as: "+username
+
+document.getElementById("user").innerText=username
+document.getElementById("myavatar").src=avatar
+
 }
 
-function post(){
+window.login=function(){
 
-let now=new Date().toDateString()
+username=document.getElementById("nickname").value
 
-if(now!=today){
-today=now
-postCount=0
+let file=document.getElementById("avatarInput").files[0]
+let reader=new FileReader()
+
+reader.onload=function(){
+
+avatar=reader.result
+
+localStorage.setItem("username",username)
+localStorage.setItem("avatar",avatar)
+
+location.reload()
+
 }
 
-if(postCount>=100){
-alert("Limit 100 posts per day")
-return
+reader.readAsDataURL(file)
+
 }
+
+window.post=async function(){
 
 let text=document.getElementById("text").value
-let file=document.getElementById("photo").files[0]
+let photoFile=document.getElementById("photo").files[0]
+let photo=""
+
+if(photoFile){
+
+let reader=new FileReader()
+
+reader.onload=async function(){
+
+photo=reader.result
+
+await addDoc(collection(db,"posts"),{
+
+user:username,
+avatar:avatar,
+text:text,
+photo:photo,
+like:0
+
+})
+
+}
+
+reader.readAsDataURL(photoFile)
+
+}else{
+
+await addDoc(collection(db,"posts"),{
+
+user:username,
+avatar:avatar,
+text:text,
+photo:"",
+like:0
+
+})
+
+}
+
+}
+
+onSnapshot(collection(db,"posts"),(snapshot)=>{
+
+document.getElementById("posts").innerHTML=""
+
+snapshot.forEach((docSnap)=>{
+
+let data=docSnap.data()
 
 let div=document.createElement("div")
 div.className="post"
 
-let name=document.createElement("b")
-name.innerText=username
+let img=""
 
-let content=document.createElement("p")
-content.innerText=text
+if(data.photo){
 
-div.appendChild(name)
-div.appendChild(content)
+img="<img class='postimg' src='"+data.photo+"'>"
 
-if(file){
-let img=document.createElement("img")
-img.src=URL.createObjectURL(file)
-div.appendChild(img)
 }
 
-let like=document.createElement("button")
-like.innerText="👍 0"
-like.onclick=function(){
-let n=parseInt(like.innerText.split(" ")[1])+1
-like.innerText="👍 "+n
+let del=""
+
+if(data.user==username){
+
+del="<button class='delete' onclick='delPost(\""+docSnap.id+"\")'>🗑</button>"
+
 }
 
-let love=document.createElement("button")
-love.innerText="❤️ 0"
-love.onclick=function(){
-let n=parseInt(love.innerText.split(" ")[1])+1
-love.innerText="❤️ "+n
-}
+div.innerHTML=
 
-let laugh=document.createElement("button")
-laugh.innerText="😂 0"
-laugh.onclick=function(){
-let n=parseInt(laugh.innerText.split(" ")[1])+1
-laugh.innerText="😂 "+n
-}
+del+
 
-div.appendChild(like)
-div.appendChild(love)
-div.appendChild(laugh)
+"<img class='avatar' src='"+data.avatar+"'> <b>"+data.user+"</b><br>"+
+
+data.text+"<br>"+img+
+
+"<br><button onclick='like(\""+docSnap.id+"\","+data.like+")'>👍 "+data.like+"</button>"
 
 document.getElementById("posts").prepend(div)
 
-postCount++
+})
+
+})
+
+window.like=async function(id,count){
+
+let ref=doc(db,"posts",id)
+
+await updateDoc(ref,{like:count+1})
+
+}
+
+window.delPost=async function(id){
+
+await deleteDoc(doc(db,"posts",id))
+
+}
+
+window.theme=function(){
+
+document.body.classList.toggle("dark")
 
 }
 
