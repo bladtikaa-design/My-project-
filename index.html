@@ -1,227 +1,182 @@
 <!DOCTYPE html>
 <html>
 <head>
+<meta charset="UTF-8">
 <title>My Social</title>
-
 <style>
 body{
-font-family:sans-serif;
-background:#f0f0f0;
-text-align:center;
+    font-family:sans-serif;
+    background:#f0f0f0;
+    text-align:center;
+    margin:0;
 }
-
+#top{
+    background:white;
+    padding:10px;
+}
 .post{
-background:white;
-margin:10px;
-padding:10px;
-border-radius:10px;
+    background:white;
+    margin:10px auto;
+    padding:10px;
+    border-radius:10px;
+    max-width:400px;
 }
-
 .avatar{
-width:40px;
-height:40px;
-border-radius:50%;
-object-fit:cover;
-vertical-align:middle;
+    width:40px;
+    height:40px;
+    border-radius:50%;
+    cursor:pointer;
 }
-
-.reactions button{
-margin:5px;
+.profileAvatar{
+    width:90px;
+    height:90px;
+    border-radius:50%;
+}
+.comment{
+    background:#eee;
+    margin-top:5px;
+    padding:5px;
+    border-radius:5px;
+    font-size:14px;
+}
+textarea{
+    width:250px;
+    height:60px;
+}
+input{
+    width:250px;
+    padding:5px;
+}
+button{
+    padding:5px 10px;
+    margin-top:5px;
+    cursor:pointer;
 }
 </style>
-
 </head>
 <body>
 
 <div id="login">
-
-<h2>Write your nickname</h2>
-
-<input id="email" placeholder="Enter Gmail">
-<br><br>
-
-<button onclick="sendCode()">Send code</button>
-
-<div id="codeBox" style="display:none">
-
-<p id="showCode"></p>
-
-<input id="codeInput" placeholder="Enter code">
-
-<br><br>
-
-<input id="nick" placeholder="Nickname">
-
-<br><br>
-
-<input type="file" id="avatar">
-
-<br><br>
-
-<button onclick="login()">Login</button>
-
-</div>
-
+    <h2>Enter nickname</h2>
+    <input id="nickname"><br><br>
+    <button onclick="login()">Enter</button>
 </div>
 
 <div id="app" style="display:none">
+    <div id="top">
+        <b id="user"></b>
+        <button onclick="openMyProfile()">My profile</button>
+    </div>
+    <br>
+    <input id="text" placeholder="Write post">
+    <button onclick="post()">Post</button>
+    <div id="posts"></div>
+</div>
 
-<h2 id="myNick"></h2>
-
-<input id="text" placeholder="Write post">
-<input type="file" id="photo">
-
-<button onclick="post()">Post</button>
-
-<div id="posts"></div>
-
+<div id="profile" style="display:none">
+    <br>
+    <img src="https://i.imgur.com/4M34hi2.png" id="profileAvatar" class="profileAvatar"><br>
+    <h2 id="profileName"></h2>
+    <textarea id="bio" placeholder="Profile description"></textarea><br>
+    <button onclick="saveBio()">Save</button>
+    <h3>User posts</h3>
+    <div id="profilePosts"></div>
+    <br>
+    <button onclick="back()">Back</button>
 </div>
 
 <script>
+let username = localStorage.getItem("username");
+let posts = JSON.parse(localStorage.getItem("posts") || "[]");
+let bios = JSON.parse(localStorage.getItem("bios") || "{}");
 
-let code=""
-let userNick=""
-let userAvatar=""
-let postsToday=0
-let lastMessage=""
-
-function sendCode(){
-
-let email=document.getElementById("email").value
-
-if(!email.endsWith("@gmail.com")){
-alert("Only Gmail allowed")
-return
-}
-
-code=Math.floor(1000+Math.random()*9000)
-
-document.getElementById("showCode").innerText="Your code: "+code
-
-document.getElementById("codeBox").style.display="block"
-
+if(username){
+    document.getElementById("login").style.display="none";
+    document.getElementById("app").style.display="block";
+    document.getElementById("user").innerText=username;
+    renderPosts();
 }
 
 function login(){
-
-let input=document.getElementById("codeInput").value
-
-if(input!=code){
-alert("Wrong code")
-return
-}
-
-userNick=document.getElementById("nick").value
-
-let file=document.getElementById("avatar").files[0]
-
-if(file){
-
-let reader=new FileReader()
-
-reader.onload=function(e){
-userAvatar=e.target.result
-startApp()
-}
-
-reader.readAsDataURL(file)
-
-}else{
-userAvatar=""
-startApp()
-}
-
-}
-
-function startApp(){
-
-document.getElementById("login").style.display="none"
-document.getElementById("app").style.display="block"
-
-document.getElementById("myNick").innerText="Hello "+userNick
-
+    username=document.getElementById("nickname").value;
+    if(username=="") return;
+    localStorage.setItem("username",username);
+    location.reload();
 }
 
 function post(){
-
-let text=document.getElementById("text").value
-
-if(postsToday>=100){
-alert("Limit 100 posts per day")
-return
+    let text=document.getElementById("text").value;
+    if(text=="") return;
+    posts.push({user:username,text:text,comments:[]});
+    localStorage.setItem("posts",JSON.stringify(posts));
+    document.getElementById("text").value="";
+    renderPosts();
 }
 
-if(text==lastMessage){
-alert("Same message wait 1 minute")
-return
+function renderPosts(){
+    let container=document.getElementById("posts");
+    container.innerHTML="";
+    posts.slice().reverse().forEach((p,i)=>{
+        let index=posts.length-1-i;
+        let div=document.createElement("div");
+        div.className="post";
+        let commentsHTML="";
+        p.comments.forEach(c=>{
+            commentsHTML+="<div class='comment'><b>"+c.user+":</b> "+c.text+"</div>";
+        });
+        div.innerHTML=`
+            <img src="https://i.imgur.com/4M34hi2.png" class="avatar" onclick="openProfile('${p.user}')">
+            <b style="cursor:pointer" onclick="openProfile('${p.user}')">${p.user}</b>
+            <p>${p.text}</p>
+            <input placeholder="Comment">
+            <button onclick="comment(this,${index})">Send</button>
+            <div>${commentsHTML}</div>
+        `;
+        container.appendChild(div);
+    });
 }
 
-lastMessage=text
-postsToday++
-
-let div=document.createElement("div")
-div.className="post"
-
-let avatar=""
-
-if(userAvatar){
-avatar="<img class='avatar' src='"+userAvatar+"'> "
+function comment(btn,index){
+    let input=btn.previousElementSibling;
+    let text=input.value;
+    if(text=="") return;
+    posts[index].comments.push({user:username,text:text});
+    localStorage.setItem("posts",JSON.stringify(posts));
+    renderPosts();
 }
 
-let photoFile=document.getElementById("photo").files[0]
-
-let photoHTML=""
-
-if(photoFile){
-
-let reader=new FileReader()
-
-reader.onload=function(e){
-
-photoHTML="<br><img src='"+e.target.result+"' width='200'>"
-
-createPost()
-
+function openProfile(user){
+    document.getElementById("app").style.display="none";
+    document.getElementById("profile").style.display="block";
+    document.getElementById("profileName").innerText=user;
+    document.getElementById("bio").value=bios[user]||"";
+    let container=document.getElementById("profilePosts");
+    container.innerHTML="";
+    posts.forEach(p=>{
+        if(p.user==user){
+            let div=document.createElement("div");
+            div.className="post";
+            div.innerText=p.text;
+            container.appendChild(div);
+        }
+    });
 }
 
-reader.readAsDataURL(photoFile)
-
-}else{
-createPost()
+function openMyProfile(){
+    openProfile(username);
 }
 
-function createPost(){
-
-div.innerHTML=
-avatar+"<b>"+userNick+"</b><br>"+text+photoHTML+
-"<div class='reactions'>"+
-"<button onclick='react(this)'>👍</button>"+
-"<button onclick='react(this)'>❤️</button>"+
-"<button onclick='react(this)'>😂</button>"+
-"</div>"
-
-document.getElementById("posts").prepend(div)
-
+function saveBio(){
+    let text=document.getElementById("bio").value;
+    let user=document.getElementById("profileName").innerText;
+    bios[user]=text;
+    localStorage.setItem("bios",JSON.stringify(bios));
 }
 
+function back(){
+    document.getElementById("profile").style.display="none";
+    document.getElementById("app").style.display="block";
 }
-
-function react(btn){
-
-if(btn.classList.contains("used")) return
-
-btn.classList.add("used")
-
-let count=btn.getAttribute("data-count")||0
-
-count++
-
-btn.setAttribute("data-count",count)
-
-btn.innerText=btn.innerText+" "+count
-
-}
-
 </script>
 
 </body>
