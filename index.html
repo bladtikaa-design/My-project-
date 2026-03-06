@@ -3,180 +3,388 @@
 <head>
 <meta charset="UTF-8">
 <title>My Social</title>
+
 <style>
+
 body{
-    font-family:sans-serif;
-    background:#f0f0f0;
-    text-align:center;
-    margin:0;
+font-family:sans-serif;
+background:#f0f0f0;
+text-align:center;
+margin:0;
 }
+
 #top{
-    background:white;
-    padding:10px;
+background:white;
+padding:10px;
 }
+
 .post{
-    background:white;
-    margin:10px auto;
-    padding:10px;
-    border-radius:10px;
-    max-width:400px;
+background:white;
+margin:10px auto;
+padding:10px;
+border-radius:10px;
+max-width:400px;
+position:relative;
 }
+
 .avatar{
-    width:40px;
-    height:40px;
-    border-radius:50%;
-    cursor:pointer;
+width:40px;
+height:40px;
+border-radius:50%;
+object-fit:cover;
 }
-.profileAvatar{
-    width:90px;
-    height:90px;
-    border-radius:50%;
+
+.postimg{
+max-width:100%;
+border-radius:10px;
+margin-top:5px;
 }
-.comment{
-    background:#eee;
-    margin-top:5px;
-    padding:5px;
-    border-radius:5px;
-    font-size:14px;
+
+.delete{
+position:absolute;
+top:5px;
+right:5px;
+border:none;
+background:red;
+color:white;
+border-radius:10px;
+cursor:pointer;
 }
-textarea{
-    width:250px;
-    height:60px;
+
+.dark{
+background:#111;
+color:white;
 }
-input{
-    width:250px;
-    padding:5px;
+
+.dark .post{
+background:#1e1e1e;
 }
-button{
-    padding:5px 10px;
-    margin-top:5px;
-    cursor:pointer;
-}
+
 </style>
 </head>
+
 <body>
 
 <div id="login">
-    <h2>Enter nickname</h2>
-    <input id="nickname"><br><br>
-    <button onclick="login()">Enter</button>
+
+<h2>Nickname</h2>
+
+<input id="nickname"><br><br>
+<input type="file" id="avatarInput"><br><br>
+
+<button onclick="login()">Enter</button>
+
 </div>
 
 <div id="app" style="display:none">
-    <div id="top">
-        <b id="user"></b>
-        <button onclick="openMyProfile()">My profile</button>
-    </div>
-    <br>
-    <input id="text" placeholder="Write post">
-    <button onclick="post()">Post</button>
-    <div id="posts"></div>
+
+<div id="top">
+
+<img id="myavatar" class="avatar">
+<b id="user"></b>
+
+<button onclick="theme()">🌙</button>
+
 </div>
 
-<div id="profile" style="display:none">
-    <br>
-    <img src="https://i.imgur.com/4M34hi2.png" id="profileAvatar" class="profileAvatar"><br>
-    <h2 id="profileName"></h2>
-    <textarea id="bio" placeholder="Profile description"></textarea><br>
-    <button onclick="saveBio()">Save</button>
-    <h3>User posts</h3>
-    <div id="profilePosts"></div>
-    <br>
-    <button onclick="back()">Back</button>
+<br>
+
+<input id="text" placeholder="Write post"><br><br>
+<input type="file" id="photo"><br><br>
+
+<button onclick="post()">Post</button>
+
+<div id="posts"></div>
+
 </div>
 
-<script>
-let username = localStorage.getItem("username");
-let posts = JSON.parse(localStorage.getItem("posts") || "[]");
-let bios = JSON.parse(localStorage.getItem("bios") || "{}");
+<script type="module">
+
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app.js";
+import { getFirestore, collection, addDoc, onSnapshot, updateDoc, doc, deleteDoc, setDoc } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js";
+
+const firebaseConfig = {
+apiKey: "AIzaSyAE46eiz4XltTwoPz4mVFG6kvPqAIhVf10",
+authDomain: "mysocial-dabdf.firebaseapp.com",
+projectId: "mysocial-dabdf",
+storageBucket: "mysocial-dabdf.firebasestorage.app",
+messagingSenderId: "812073291348",
+appId: "1:812073291348:web:e68dbf6c412c72de5aa7c1",
+measurementId: "G-24XWVXT1HV"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+let username=localStorage.getItem("username")
+let avatar=localStorage.getItem("avatar")
 
 if(username){
-    document.getElementById("login").style.display="none";
-    document.getElementById("app").style.display="block";
-    document.getElementById("user").innerText=username;
-    renderPosts();
+
+document.getElementById("login").style.display="none"
+document.getElementById("app").style.display="block"
+
+document.getElementById("user").innerText=username
+document.getElementById("myavatar").src=avatar
+
+// --- 1. DEVELOPER для админа ---
+const adminNick = "bladtikaa-design";
+if(username === adminNick){
+    document.getElementById("user").innerHTML += ' <span style="color:red;font-weight:bold;">DEVELOPER</span> <span style="background:black;color:red;border-radius:50%;padding:3px 6px;">✔</span>';
+
+    // кнопка звонка возле ника
+    const callBtn = document.createElement("button");
+    callBtn.innerText = "Позвонить";
+    callBtn.style.marginLeft="10px";
+    callBtn.onclick = ()=>{ startCallPrompt(); };
+    document.getElementById("top").appendChild(callBtn);
 }
 
-function login(){
-    username=document.getElementById("nickname").value;
-    if(username=="") return;
-    localStorage.setItem("username",username);
-    location.reload();
+// --- 2. Личные сообщения ---
+const pmDiv = document.createElement("div");
+pmDiv.id = "pm-system";
+pmDiv.style.cssText = "position:fixed;bottom:20px;right:20px;width:300px;background:#1e1e1e;color:white;padding:10px;border-radius:10px;font-family:Arial;box-shadow:0 0 10px black;";
+pmDiv.innerHTML = `
+<b>Личные сообщения</b>
+<div id="pm-messages" style="height:120px;overflow-y:auto;margin-top:8px;background:#111;padding:5px;border-radius:5px;"></div>
+<input id="pmInput" placeholder="Написать..." style="width:70%;padding:5px;border:none;border-radius:5px;">
+<button id="pmSend" style="padding:5px 10px;background:#444;color:white;border:none;border-radius:5px;cursor:pointer;">➤</button>
+`;
+document.body.appendChild(pmDiv);
+
+let messages = [];
+document.getElementById("pmSend").onclick = ()=>{
+    const txt = document.getElementById("pmInput").value;
+    if(txt.trim()==="") return;
+    messages.push(txt);
+    updatePM();
+    document.getElementById("pmInput").value="";
+};
+function updatePM(){
+    const box = document.getElementById("pm-messages");
+    box.innerHTML = "";
+    messages.forEach(m=>box.innerHTML+="<div>"+m+"</div>");
+    box.scrollTop = box.scrollHeight;
 }
 
-function post(){
-    let text=document.getElementById("text").value;
-    if(text=="") return;
-    posts.push({user:username,text:text,comments:[]});
-    localStorage.setItem("posts",JSON.stringify(posts));
-    document.getElementById("text").value="";
-    renderPosts();
+// --- 3. WebRTC звонки ---
+let localStream;
+let peerConnection;
+const servers = { iceServers:[{urls:"stun:stun.l.google.com:19302"}] };
+async function startCamera(){
+    localStream = await navigator.mediaDevices.getUserMedia({video:true,audio:true});
 }
+startCamera();
 
-function renderPosts(){
-    let container=document.getElementById("posts");
-    container.innerHTML="";
-    posts.slice().reverse().forEach((p,i)=>{
-        let index=posts.length-1-i;
-        let div=document.createElement("div");
-        div.className="post";
-        let commentsHTML="";
-        p.comments.forEach(c=>{
-            commentsHTML+="<div class='comment'><b>"+c.user+":</b> "+c.text+"</div>";
-        });
-        div.innerHTML=`
-            <img src="https://i.imgur.com/4M34hi2.png" class="avatar" onclick="openProfile('${p.user}')">
-            <b style="cursor:pointer" onclick="openProfile('${p.user}')">${p.user}</b>
-            <p>${p.text}</p>
-            <input placeholder="Comment">
-            <button onclick="comment(this,${index})">Send</button>
-            <div>${commentsHTML}</div>
-        `;
-        container.appendChild(div);
+// окно входящего звонка
+const incomingDiv = document.createElement("div");
+incomingDiv.id="incomingCall";
+incomingDiv.style.cssText="display:none;position:fixed;top:20px;left:50%;transform:translateX(-50%);background:#222;color:white;padding:10px;border-radius:10px;z-index:1000;font-family:Arial;";
+incomingDiv.innerHTML=`
+<b>Входящий звонок!</b><br>
+<span id="fromUserCall"></span><br>
+<button id="acceptCall">Принять</button>
+<button id="declineCall">Отклонить</button>
+<video id="callVideo" autoplay playsinline style="display:none;width:300px;margin-top:5px;border-radius:10px;"></video>
+`;
+document.body.appendChild(incomingDiv);
+
+// функция звонка
+async function startCallPrompt(){
+    const callee = prompt("Введите ник пользователя, которому звоните:");
+    if(!callee) return;
+
+    const callDoc = doc(collection(db,"calls"));
+    peerConnection = new RTCPeerConnection(servers);
+    localStream.getTracks().forEach(track=>peerConnection.addTrack(track,localStream));
+
+    const offer = await peerConnection.createOffer();
+    await peerConnection.setLocalDescription(offer);
+
+    await setDoc(callDoc,{
+        caller: username,
+        callee: callee,
+        offer: offer.toJSON(),
+        status:"calling"
     });
-}
 
-function comment(btn,index){
-    let input=btn.previousElementSibling;
-    let text=input.value;
-    if(text=="") return;
-    posts[index].comments.push({user:username,text:text});
-    localStorage.setItem("posts",JSON.stringify(posts));
-    renderPosts();
-}
-
-function openProfile(user){
-    document.getElementById("app").style.display="none";
-    document.getElementById("profile").style.display="block";
-    document.getElementById("profileName").innerText=user;
-    document.getElementById("bio").value=bios[user]||"";
-    let container=document.getElementById("profilePosts");
-    container.innerHTML="";
-    posts.forEach(p=>{
-        if(p.user==user){
-            let div=document.createElement("div");
-            div.className="post";
-            div.innerText=p.text;
-            container.appendChild(div);
+    // слушаем ответ
+    onSnapshot(callDoc, async snap=>{
+        const data = snap.data();
+        if(data && data.answer){
+            await peerConnection.setRemoteDescription(new RTCSessionDescription(data.answer));
         }
     });
+
+    peerConnection.ontrack = event=>{
+        const video = document.getElementById("callVideo");
+        video.style.display="block";
+        video.srcObject = event.streams[0];
+    };
 }
 
-function openMyProfile(){
-    openProfile(username);
+// слушаем входящие звонки
+onSnapshot(collection(db,"calls"), snapshot=>{
+    snapshot.docChanges().forEach(change=>{
+        const data = change.doc.data();
+        if(data.callee === username && change.type==="added"){
+            incomingDiv.style.display="block";
+            document.getElementById("fromUserCall").innerText="От: "+data.caller;
+
+            document.getElementById("acceptCall").onclick = async ()=>{
+                incomingDiv.style.display="none";
+                peerConnection = new RTCPeerConnection(servers);
+                localStream.getTracks().forEach(track=>peerConnection.addTrack(track,localStream));
+                await peerConnection.setRemoteDescription(new RTCSessionDescription(data.offer));
+                const answer = await peerConnection.createAnswer();
+                await peerConnection.setLocalDescription(answer);
+                await setDoc(change.doc.ref,{answer: answer.toJSON(),status:"accepted"},{merge:true});
+
+                peerConnection.ontrack = event=>{
+                    const video = document.getElementById("callVideo");
+                    video.style.display="block";
+                    video.srcObject = event.streams[0];
+                };
+            };
+
+            document.getElementById("declineCall").onclick = ()=>{
+                incomingDiv.style.display="none";
+                change.doc.ref.delete();
+            };
+        }
+    });
+});
+
+} // конец if(username)
+window.login=function(){
+
+username=document.getElementById("nickname").value
+
+let file=document.getElementById("avatarInput").files[0]
+let reader=new FileReader()
+
+reader.onload=function(){
+
+avatar=reader.result
+
+localStorage.setItem("username",username)
+localStorage.setItem("avatar",avatar)
+
+location.reload()
+
 }
 
-function saveBio(){
-    let text=document.getElementById("bio").value;
-    let user=document.getElementById("profileName").innerText;
-    bios[user]=text;
-    localStorage.setItem("bios",JSON.stringify(bios));
+reader.readAsDataURL(file)
+
 }
 
-function back(){
-    document.getElementById("profile").style.display="none";
-    document.getElementById("app").style.display="block";
+window.post=async function(){
+
+let text=document.getElementById("text").value
+let photoFile=document.getElementById("photo").files[0]
+let photo=""
+
+if(photoFile){
+
+let reader=new FileReader()
+
+reader.onload=async function(){
+
+photo=reader.result
+
+await addDoc(collection(db,"posts"),{
+
+user:username,
+avatar:avatar,
+text:text,
+photo:photo,
+like:0
+
+})
+
 }
+
+reader.readAsDataURL(photoFile)
+
+}else{
+
+await addDoc(collection(db,"posts"),{
+
+user:username,
+avatar:avatar,
+text:text,
+photo:"",
+like:0
+
+})
+
+}
+
+}
+
+onSnapshot(collection(db,"posts"),(snapshot)=>{
+
+document.getElementById("posts").innerHTML=""
+
+snapshot.forEach((docSnap)=>{
+
+let data=docSnap.data()
+
+let div=document.createElement("div")
+div.className="post"
+
+let img=""
+
+if(data.photo){
+
+img="<img class='postimg' src='"+data.photo+"'>"
+
+}
+
+let del=""
+
+if(data.user==username){
+
+del="<button class='delete' onclick='delPost(\""+docSnap.id+"\")'>🗑</button>"
+
+}
+
+div.innerHTML=
+
+del+
+
+"<img class='avatar' src='"+data.avatar+"'> <b>"+data.user+"</b><br>"+
+
+data.text+"<br>"+img+
+
+"<br><button onclick='like(\""+docSnap.id+"\","+data.like+")'>👍 "+data.like+"</button>"
+
+document.getElementById("posts").prepend(div)
+
+})
+
+})
+
+window.like=async function(id,count){
+
+let ref=doc(db,"posts",id)
+
+await updateDoc(ref,{like:count+1})
+
+}
+
+window.delPost=async function(id){
+
+await deleteDoc(doc(db,"posts",id))
+
+}
+
+window.theme=function(){
+
+document.body.classList.toggle("dark")
+
+}
+
 </script>
 
 </body>
