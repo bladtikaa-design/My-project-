@@ -16,6 +16,7 @@ body{font-family:sans-serif;background:#f0f0f0;text-align:center;margin:0;}
 #dmMessages{height:120px;overflow-y:auto;background:#111;padding:5px;border-radius:5px;margin-bottom:5px;}
 #callVideo{display:none;width:100%;margin-top:5px;border-radius:10px;}
 #incomingCall{display:none;background:#333;color:white;padding:10px;border-radius:10px;margin-bottom:5px;}
+#callUserBtn{padding:5px 8px;border:none;background:blue;color:white;border-radius:5px;cursor:pointer;margin-bottom:5px;}
 </style>
 </head>
 <body>
@@ -41,10 +42,11 @@ body{font-family:sans-serif;background:#f0f0f0;text-align:center;margin:0;}
 </div>
 
 <div id="profileDiv">
-<b id="profileNick"></b><br><br>
+<b id="profileNick"></b><br>
+<button id="callUserBtn">📞 Позвонить</button><br><br>
 <div id="dmMessages"></div>
 <input id="dmInput" placeholder="Написать..." style="width:70%;padding:5px;border-radius:5px;border:none;">
-<button id="dmSend" style="padding:5px 8px;border:none;background:#444;color:white;border-radius:5px;cursor:pointer;">➤</button><br><br>
+<button id="dmSend">➤</button><br><br>
 <div id="incomingCall">
 <b id="callerName"></b> звонит!<br>
 <button id="acceptCallBtn">Принять</button>
@@ -210,14 +212,17 @@ async function endCall(){
 }
 
 // ---------------- Make call ----------------
-document.getElementById("callUserBtn")?.addEventListener("click", async ()=>{
+document.getElementById("callUserBtn").addEventListener("click", async ()=>{
     if(!activeProfile) return;
     const callDocRef = doc(collection(db,"calls"));
     currentCallDoc = callDocRef;
 
     peerConnection = new RTCPeerConnection(servers);
     localStream.getTracks().forEach(track=>peerConnection.addTrack(track,localStream));
-    peerConnection.ontrack = e=>{document.getElementById("callVideo").style.display="block"; document.getElementById("callVideo").srcObject = e.streams[0];};
+    peerConnection.ontrack = e=>{
+        document.getElementById("callVideo").style.display="block";
+        document.getElementById("callVideo").srcObject = e.streams[0];
+    };
     peerConnection.onicecandidate = event=>{
         if(event.candidate) setDoc(callDocRef,{ice:[event.candidate]},{merge:true});
     }
