@@ -8,9 +8,73 @@
 
 body{
 font-family:sans-serif;
-background:#f0f0f0;
-text-align:center;
 margin:0;
+background:#f0f0f0;
+overflow-x:hidden;
+}
+
+#login{
+position:fixed;
+width:100%;
+height:100%;
+background:white;
+display:flex;
+justify-content:center;
+align-items:center;
+flex-direction:column;
+z-index:10;
+}
+
+#particles{
+position:fixed;
+top:0;
+left:0;
+width:100%;
+height:100%;
+pointer-events:none;
+}
+
+.dot{
+position:absolute;
+width:6px;
+height:6px;
+background:#bbb;
+border-radius:50%;
+animation:fly linear infinite;
+}
+
+@keyframes fly{
+from{
+transform:translateY(100vh);
+opacity:1;
+}
+to{
+transform:translateY(-10vh);
+opacity:0;
+}
+}
+
+.bubble{
+background:rgba(255,255,255,0.6);
+border:1px solid #ccc;
+border-radius:30px;
+padding:12px 20px;
+outline:none;
+width:250px;
+backdrop-filter:blur(6px);
+}
+
+button{
+border:none;
+border-radius:20px;
+padding:8px 20px;
+background:#444;
+color:white;
+cursor:pointer;
+}
+
+#error{
+color:red;
 }
 
 #top{
@@ -48,7 +112,6 @@ border:none;
 background:red;
 color:white;
 border-radius:10px;
-cursor:pointer;
 }
 
 .dark{
@@ -65,14 +128,38 @@ background:#1e1e1e;
 
 <body>
 
+<div id="particles"></div>
+
 <div id="login">
 
-<h2>Nickname</h2>
+<h2>Enter Gmail</h2>
 
-<input id="nickname"><br><br>
+<input id="email" class="bubble" placeholder="yourname@gmail.com">
+
+<br><br>
+
+<button onclick="checkEmail()">Continue</button>
+
+<p id="error"></p>
+
+<div id="verify" style="display:none">
+
+<p>verify code is send on your email</p>
+
+<input id="code" class="bubble" placeholder="code">
+
+<br><br>
+
+<button onclick="verify()">Verify</button>
+
+</div>
+
+<br><br>
+
+<h3>Nickname</h3>
+
+<input id="nickname" class="bubble"><br><br>
 <input type="file" id="avatarInput"><br><br>
-
-<button onclick="login()">Enter</button>
 
 </div>
 
@@ -89,10 +176,14 @@ background:#1e1e1e;
 
 <br>
 
-<input id="text" placeholder="Write post"><br><br>
+<center>
+
+<input id="text" class="bubble" placeholder="Write post"><br><br>
 <input type="file" id="photo"><br><br>
 
 <button onclick="post()">Post</button>
+
+</center>
 
 <div id="posts"></div>
 
@@ -109,17 +200,54 @@ authDomain: "mysocial-dabdf.firebaseapp.com",
 projectId: "mysocial-dabdf",
 storageBucket: "mysocial-dabdf.firebasestorage.app",
 messagingSenderId: "812073291348",
-appId: "1:812073291348:web:e68dbf6c412c72de5aa7c1",
-measurementId: "G-24XWVXT1HV"
+appId: "1:812073291348:web:e68dbf6c412c72de5aa7c1"
 };
 
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-let username=localStorage.getItem("username")
-let avatar=localStorage.getItem("avatar")
+let username=""
+let avatar=""
 
-if(username){
+let verifyCode=""
+
+window.checkEmail=function(){
+
+let email=document.getElementById("email").value
+
+if(!email.endsWith("@gmail.com")){
+
+document.getElementById("error").innerText="no working"
+return
+
+}
+
+document.getElementById("error").style.color="green"
+document.getElementById("error").innerText="verify code is send on your email"
+
+verifyCode=Math.floor(1000+Math.random()*9000)
+
+console.log("verification code:",verifyCode)
+
+document.getElementById("verify").style.display="block"
+
+}
+
+window.verify=function(){
+
+let code=document.getElementById("code").value
+
+if(code==verifyCode){
+
+username=document.getElementById("nickname").value
+
+let file=document.getElementById("avatarInput").files[0]
+
+let reader=new FileReader()
+
+reader.onload=function(){
+
+avatar=reader.result
 
 document.getElementById("login").style.display="none"
 document.getElementById("app").style.display="block"
@@ -129,25 +257,13 @@ document.getElementById("myavatar").src=avatar
 
 }
 
-window.login=function(){
+reader.readAsDataURL(file)
 
-username=document.getElementById("nickname").value
+}else{
 
-let file=document.getElementById("avatarInput").files[0]
-let reader=new FileReader()
-
-reader.onload=function(){
-
-avatar=reader.result
-
-localStorage.setItem("username",username)
-localStorage.setItem("avatar",avatar)
-
-location.reload()
+document.getElementById("error").innerText="wrong code"
 
 }
-
-reader.readAsDataURL(file)
 
 }
 
@@ -155,6 +271,7 @@ window.post=async function(){
 
 let text=document.getElementById("text").value
 let photoFile=document.getElementById("photo").files[0]
+
 let photo=""
 
 if(photoFile){
@@ -255,6 +372,19 @@ await deleteDoc(doc(db,"posts",id))
 window.theme=function(){
 
 document.body.classList.toggle("dark")
+
+}
+
+for(let i=0;i<40;i++){
+
+let dot=document.createElement("div")
+
+dot.className="dot"
+
+dot.style.left=Math.random()*100+"%"
+dot.style.animationDuration=(4+Math.random()*6)+"s"
+
+document.getElementById("particles").appendChild(dot)
 
 }
 
