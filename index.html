@@ -1,3 +1,82 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>My Social</title>
+
+<style>
+body{
+    font-family:sans-serif;
+    background:#f0f0f0;
+    text-align:center;
+    margin:0;
+}
+#top{
+    background:white;
+    padding:10px;
+}
+.post{
+    background:white;
+    margin:10px auto;
+    padding:10px;
+    border-radius:10px;
+    max-width:400px;
+    position:relative;
+}
+.avatar{
+    width:40px;
+    height:40px;
+    border-radius:50%;
+    object-fit:cover;
+}
+.postimg{
+    max-width:100%;
+    border-radius:10px;
+    margin-top:5px;
+}
+.delete{
+    position:absolute;
+    top:5px;
+    right:5px;
+    border:none;
+    background:red;
+    color:white;
+    border-radius:10px;
+    cursor:pointer;
+}
+.dark{
+    background:#111;
+    color:white;
+}
+.dark .post{
+    background:#1e1e1e;
+}
+</style>
+</head>
+<body>
+
+<div id="login">
+<h2>Nickname</h2>
+<input id="nickname"><br><br>
+<input type="file" id="avatarInput"><br><br>
+<button onclick="login()">Enter</button>
+</div>
+
+<div id="app" style="display:none">
+<div id="top">
+<img id="myavatar" class="avatar">
+<b id="user"></b>
+<button onclick="theme()">🌙</button>
+</div>
+
+<br>
+<input id="text" placeholder="Write post"><br><br>
+<input type="file" id="photo"><br><br>
+<button onclick="post()">Post</button>
+
+<div id="posts"></div>
+</div>
+
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app.js";
 import { getFirestore, collection, addDoc, onSnapshot, updateDoc, doc, deleteDoc, setDoc } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js";
@@ -11,14 +90,13 @@ messagingSenderId: "812073291348",
 appId: "1:812073291348:web:e68dbf6c412c72de5aa7c1",
 measurementId: "G-24XWVXT1HV"
 };
-
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
 let username = localStorage.getItem("username");
 let avatar = localStorage.getItem("avatar");
 
-// ----------------- окно профиля -----------------
+// ---------- Profile / DM / Calls ----------
 const profileDiv = document.createElement("div");
 profileDiv.id = "profileDiv";
 profileDiv.style.cssText = "display:none;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:#222;color:white;padding:15px;border-radius:10px;z-index:1000;font-family:sans-serif;width:300px;";
@@ -36,7 +114,7 @@ document.body.appendChild(profileDiv);
 let messages = {};
 let activeProfile = "";
 
-// ----------------- функции открытия профиля -----------------
+// ---------- Open Profile ----------
 window.openProfile = function(user){
     activeProfile = user;
     document.getElementById("profileDiv").style.display="block";
@@ -50,7 +128,7 @@ document.getElementById("closeProfile").onclick = ()=>{
     document.getElementById("callVideo").style.display="none";
 };
 
-// ----------------- логика входа -----------------
+// ---------- Login ----------
 window.login=function(){
     username=document.getElementById("nickname").value;
     let file=document.getElementById("avatarInput").files[0];
@@ -64,7 +142,7 @@ window.login=function(){
     reader.readAsDataURL(file);
 }
 
-// ----------------- после входа -----------------
+// ---------- After Login ----------
 function afterLogin(){
     document.getElementById("login").style.display="none";
     document.getElementById("app").style.display="block";
@@ -80,7 +158,7 @@ function afterLogin(){
 }
 if(username) afterLogin();
 
-// ----------------- функционал постов -----------------
+// ---------- Posts ----------
 window.post=async function(){
     let text=document.getElementById("text").value;
     let photoFile=document.getElementById("photo").files[0];
@@ -104,10 +182,8 @@ function startRealtime(){
             let data=docSnap.data();
             let div=document.createElement("div");
             div.className="post";
-
             let img="";
             if(data.photo) img="<img class='postimg' src='"+data.photo+"'>";
-
             let del="";
             if(data.user==username) del="<button class='delete' onclick='delPost(\""+docSnap.id+"\")'>🗑</button>";
 
@@ -115,8 +191,23 @@ function startRealtime(){
             document.getElementById("posts").prepend(div);
         })
     });
+
+    // Messages
+    onSnapshot(collection(db,"messages"), snapshot=>{
+        snapshot.docChanges().forEach(change=>{
+            const data = change.doc.data();
+            if((data.from===username && data.to) || (data.to===username && data.from)){
+                if(!messages[data.from]) messages[data.from]=[];
+                if(!messages[data.to]) messages[data.to]=[];
+                if(data.to===username) messages[data.from].push(data);
+                else messages[data.to].push(data);
+                if(activeProfile===data.from || activeProfile===data.to) updateDM();
+            }
+        });
+    });
 }
 
+// ---------- Likes / Delete / Theme ----------
 window.like=async function(id,count){
     let ref=doc(db,"posts",id);
     await updateDoc(ref,{like:count+1});
@@ -128,7 +219,7 @@ window.theme=function(){
     document.body.classList.toggle("dark");
 }
 
-// ----------------- Direct Messages -----------------
+// ---------- Direct Messages ----------
 document.getElementById("dmSend").onclick = async ()=>{
     const txt = document.getElementById("dmInput").value;
     if(!txt.trim()) return;
@@ -147,24 +238,10 @@ function updateDM(){
     box.scrollTop = box.scrollHeight;
 }
 
-onSnapshot(collection(db,"messages"), snapshot=>{
-    snapshot.docChanges().forEach(change=>{
-        const data = change.doc.data();
-        if((data.from===username && data.to) || (data.to===username && data.from)){
-            if(!messages[data.from]) messages[data.from]=[];
-            if(!messages[data.to]) messages[data.to]=[];
-            if(data.to===username) messages[data.from].push(data);
-            else messages[data.to].push(data);
-            if(activeProfile===data.from || activeProfile===data.to) updateDM();
-        }
-    });
-});
-
-// ----------------- Звонки -----------------
+// ---------- Calls ----------
 let localStream;
 let peerConnection;
 const servers = { iceServers:[{urls:"stun:stun.l.google.com:19302"}] };
-
 async function startCamera(){
     localStream = await navigator.mediaDevices.getUserMedia({video:true,audio:true});
 }
@@ -224,3 +301,6 @@ onSnapshot(collection(db,"calls"), snapshot=>{
     });
 });
 </script>
+
+</body>
+</html>
