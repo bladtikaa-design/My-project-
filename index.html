@@ -77,7 +77,6 @@ justify-content:center;
 background:white;
 padding:20px;
 border-radius:15px;
-text-align:center;
 }
 
 #chat{
@@ -110,15 +109,8 @@ border-radius:10px;
 display:none;
 }
 
-.online{
-color:green;
-font-size:12px;
-}
-
-.offline{
-color:gray;
-font-size:12px;
-}
+.online{color:green}
+.offline{color:gray}
 
 </style>
 </head>
@@ -159,6 +151,7 @@ font-size:12px;
 </div>
 
 <div id="profile">
+
 <div id="profileBox">
 
 <img id="pavatar" class="avatar"><br><br>
@@ -171,6 +164,7 @@ font-size:12px;
 <button onclick="closeProfile()">Close</button>
 
 </div>
+
 </div>
 
 <div id="chat">
@@ -199,9 +193,9 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/12.10.0/fireba
 import { getFirestore, collection, addDoc, onSnapshot, updateDoc, doc, deleteDoc, query, where, setDoc } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js";
 
 const firebaseConfig = {
-apiKey: "AIzaSyAE46eiz4XltTwoPz4mVFG6kvPqAIhVf10",
-authDomain: "mysocial-dabdf.firebaseapp.com",
-projectId: "mysocial-dabdf"
+apiKey:"AIzaSyAE46eiz4XltTwoPz4mVFG6kvPqAIhVf10",
+authDomain:"mysocial-dabdf.firebaseapp.com",
+projectId:"mysocial-dabdf"
 };
 
 const app = initializeApp(firebaseConfig);
@@ -249,16 +243,37 @@ reader.readAsDataURL(file)
 window.post=async function(){
 
 let text=document.getElementById("text").value
+let photoFile=document.getElementById("photo").files[0]
+
+if(photoFile){
+
+let reader=new FileReader()
+
+reader.onload=async function(){
 
 await addDoc(collection(db,"posts"),{
+user:username,
+avatar:avatar,
+text:text,
+photo:reader.result,
+like:0
+})
 
+}
+
+reader.readAsDataURL(photoFile)
+
+}else{
+
+await addDoc(collection(db,"posts"),{
 user:username,
 avatar:avatar,
 text:text,
 photo:"",
 like:0
-
 })
+
+}
 
 }
 
@@ -270,6 +285,14 @@ snapshot.forEach((docSnap)=>{
 
 let data=docSnap.data()
 
+let img=""
+
+if(data.photo){
+
+img="<br><img class='postimg' src='"+data.photo+"'>"
+
+}
+
 let div=document.createElement("div")
 div.className="post"
 
@@ -278,6 +301,8 @@ div.innerHTML=
 "<img onclick='openProfile(\""+data.user+"\",\""+data.avatar+"\")' class='avatar' src='"+data.avatar+"'> <b>"+data.user+"</b><br>"+
 
 data.text+
+
+img+
 
 "<br><button onclick='like(\""+docSnap.id+"\","+data.like+")'>👍 "+data.like+"</button>"
 
@@ -346,7 +371,6 @@ snap.forEach(d=>{
 let m=d.data()
 
 document.getElementById("messages").innerHTML+=
-
 "<div><b>"+m.user+":</b> "+m.text+"</div>"
 
 })
@@ -360,11 +384,9 @@ window.sendMsg=async function(){
 let text=document.getElementById("msg").value
 
 await addDoc(collection(db,"messages"),{
-
 room:username+"_"+targetUser,
 user:username,
 text:text
-
 })
 
 }
@@ -372,11 +394,8 @@ text:text
 window.callUser=async function(){
 
 await addDoc(collection(db,"calls"),{
-
 from:username,
-to:targetUser,
-status:"call"
-
+to:targetUser
 })
 
 }
