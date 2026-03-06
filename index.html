@@ -63,54 +63,48 @@ background:#1e1e1e;
 
 #profile{
 position:fixed;
-top:0;
-left:0;
-width:100%;
-height:100%;
-background:#000000aa;
-display:none;
-align-items:center;
-justify-content:center;
-}
-
-#profileBox{
-background:white;
-padding:20px;
-border-radius:15px;
-}
-
-#chat{
-position:fixed;
-bottom:0;
-right:0;
-width:300px;
-height:400px;
-background:white;
-border-radius:10px 10px 0 0;
-display:none;
-flex-direction:column;
-}
-
-#messages{
-flex:1;
-overflow:auto;
-padding:10px;
-}
-
-#callpopup{
-position:fixed;
-top:20px;
+top:50%;
 left:50%;
-transform:translateX(-50%);
-background:#1e88ff;
+transform:translate(-50%,-50%);
+background:#222;
 color:white;
 padding:15px;
 border-radius:10px;
 display:none;
+width:300px;
 }
 
-.online{color:green}
-.offline{color:gray}
+#messages{
+height:120px;
+overflow:auto;
+background:#111;
+padding:5px;
+border-radius:5px;
+}
+
+.status{
+font-size:12px;
+}
+
+.online{
+color:#00ff66;
+}
+
+.offline{
+color:#aaa;
+}
+
+#incoming{
+display:none;
+background:#333;
+padding:10px;
+border-radius:10px;
+}
+
+video{
+width:100%;
+border-radius:10px;
+}
 
 </style>
 </head>
@@ -152,50 +146,53 @@ display:none;
 
 <div id="profile">
 
-<div id="profileBox">
+<b id="pname"></b>
+<div id="pstatus" class="status"></div>
 
-<img id="pavatar" class="avatar"><br><br>
-<b id="pname"></b><br>
-<span id="pstatus"></span><br><br>
+<br>
 
-<button onclick="openChat()">Direct Messages</button>
-<button onclick="callUser()">Call</button><br><br>
+<button id="callBtn">📞 Call</button>
 
-<button onclick="closeProfile()">Close</button>
-
-</div>
-
-</div>
-
-<div id="chat">
+<br><br>
 
 <div id="messages"></div>
 
 <input id="msg" placeholder="message">
-<button onclick="sendMsg()">Send</button>
-
-</div>
-
-<div id="callpopup">
-
-<b id="caller"></b> calling...
+<button id="send">Send</button>
 
 <br><br>
 
-<button onclick="acceptCall()">Accept</button>
-<button onclick="rejectCall()">Reject</button>
+<div id="incoming">
+
+<b id="caller"></b> calling
+
+<br>
+
+<button id="accept">Accept</button>
+<button id="reject">Reject</button>
+
+</div>
+
+<video id="video" autoplay playsinline></video>
+
+<br>
+
+<button onclick="closeProfile()">Close</button>
 
 </div>
 
 <script type="module">
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app.js";
-import { getFirestore, collection, addDoc, onSnapshot, updateDoc, doc, deleteDoc, query, where, setDoc } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js";
+import { getFirestore, collection, addDoc, onSnapshot, updateDoc, doc, deleteDoc, setDoc, query, where } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js";
 
 const firebaseConfig = {
-apiKey:"AIzaSyAE46eiz4XltTwoPz4mVFG6kvPqAIhVf10",
-authDomain:"mysocial-dabdf.firebaseapp.com",
-projectId:"mysocial-dabdf"
+apiKey: "AIzaSyAE46eiz4XltTwoPz4mVFG6kvPqAIhVf10",
+authDomain: "mysocial-dabdf.firebaseapp.com",
+projectId: "mysocial-dabdf",
+storageBucket: "mysocial-dabdf.firebasestorage.app",
+messagingSenderId: "812073291348",
+appId: "1:812073291348:web:e68dbf6c412c72de5aa7c1"
 };
 
 const app = initializeApp(firebaseConfig);
@@ -204,9 +201,15 @@ const db = getFirestore(app);
 let username=localStorage.getItem("username")
 let avatar=localStorage.getItem("avatar")
 
-let targetUser=""
+let activeUser=""
 
 if(username){
+
+afterLogin()
+
+}
+
+function afterLogin(){
 
 document.getElementById("login").style.display="none"
 document.getElementById("app").style.display="block"
@@ -214,7 +217,7 @@ document.getElementById("app").style.display="block"
 document.getElementById("user").innerText=username
 document.getElementById("myavatar").src=avatar
 
-setDoc(doc(db,"online",username),{online:true})
+setDoc(doc(db,"status",username),{online:true})
 
 }
 
@@ -223,6 +226,7 @@ window.login=function(){
 username=document.getElementById("nickname").value
 
 let file=document.getElementById("avatarInput").files[0]
+
 let reader=new FileReader()
 
 reader.onload=function(){
@@ -232,7 +236,7 @@ avatar=reader.result
 localStorage.setItem("username",username)
 localStorage.setItem("avatar",avatar)
 
-location.reload()
+afterLogin()
 
 }
 
@@ -243,68 +247,37 @@ reader.readAsDataURL(file)
 window.post=async function(){
 
 let text=document.getElementById("text").value
-let photoFile=document.getElementById("photo").files[0]
-
-if(photoFile){
-
-let reader=new FileReader()
-
-reader.onload=async function(){
 
 await addDoc(collection(db,"posts"),{
+
 user:username,
 avatar:avatar,
 text:text,
-photo:reader.result,
 like:0
+
 })
 
 }
 
-reader.readAsDataURL(photoFile)
-
-}else{
-
-await addDoc(collection(db,"posts"),{
-user:username,
-avatar:avatar,
-text:text,
-photo:"",
-like:0
-})
-
-}
-
-}
-
-onSnapshot(collection(db,"posts"),(snapshot)=>{
+onSnapshot(collection(db,"posts"),(snap)=>{
 
 document.getElementById("posts").innerHTML=""
 
-snapshot.forEach((docSnap)=>{
+snap.forEach((docSnap)=>{
 
-let data=docSnap.data()
-
-let img=""
-
-if(data.photo){
-
-img="<br><img class='postimg' src='"+data.photo+"'>"
-
-}
+let d=docSnap.data()
 
 let div=document.createElement("div")
+
 div.className="post"
 
 div.innerHTML=
 
-"<img onclick='openProfile(\""+data.user+"\",\""+data.avatar+"\")' class='avatar' src='"+data.avatar+"'> <b>"+data.user+"</b><br>"+
+"<img class='avatar' src='"+d.avatar+"' onclick='openProfile(\""+d.user+"\")'> <b onclick='openProfile(\""+d.user+"\")'>"+d.user+"</b><br>"+
 
-data.text+
+d.text+
 
-img+
-
-"<br><button onclick='like(\""+docSnap.id+"\","+data.like+")'>👍 "+data.like+"</button>"
+"<br><button onclick='like(\""+docSnap.id+"\","+d.like+")'>👍 "+d.like+"</button>"
 
 document.getElementById("posts").prepend(div)
 
@@ -318,33 +291,31 @@ await updateDoc(doc(db,"posts",id),{like:count+1})
 
 }
 
-window.theme=function(){
+window.openProfile=function(user){
 
-document.body.classList.toggle("dark")
+activeUser=user
 
-}
+document.getElementById("profile").style.display="block"
 
-window.openProfile=function(name,av){
+document.getElementById("pname").innerText=user
 
-targetUser=name
+const q=query(collection(db,"status"),where("__name__","==",user))
 
-document.getElementById("profile").style.display="flex"
-document.getElementById("pname").innerText=name
-document.getElementById("pavatar").src=av
+onSnapshot(q,(snap)=>{
 
-const q=query(collection(db,"online"),where("__name__","==",name))
+snap.forEach((d)=>{
 
-onSnapshot(q,(s)=>{
+if(d.data().online){
 
-if(s.empty){
-
-document.getElementById("pstatus").innerHTML="<span class='offline'>offline</span>"
+document.getElementById("pstatus").innerHTML="🟢 online"
 
 }else{
 
-document.getElementById("pstatus").innerHTML="<span class='online'>online</span>"
+document.getElementById("pstatus").innerHTML="⚪ offline"
 
 }
+
+})
 
 })
 
@@ -356,71 +327,67 @@ document.getElementById("profile").style.display="none"
 
 }
 
-window.openChat=function(){
+document.getElementById("send").onclick=async()=>{
 
-document.getElementById("chat").style.display="flex"
+let txt=document.getElementById("msg").value
 
-const q=query(collection(db,"messages"),where("room","==",username+"_"+targetUser))
+await addDoc(collection(db,"messages"),{
 
-onSnapshot(q,(snap)=>{
+from:username,
+to:activeUser,
+text:txt
 
-document.getElementById("messages").innerHTML=""
+})
 
-snap.forEach(d=>{
+}
+
+const msgQuery=query(collection(db,"messages"))
+
+onSnapshot(msgQuery,(snap)=>{
+
+let box=document.getElementById("messages")
+
+box.innerHTML=""
+
+snap.forEach((d)=>{
 
 let m=d.data()
 
-document.getElementById("messages").innerHTML+=
-"<div><b>"+m.user+":</b> "+m.text+"</div>"
+if((m.from==username&&m.to==activeUser)||(m.from==activeUser&&m.to==username)){
 
-})
-
-})
+box.innerHTML+=m.from+": "+m.text+"<br>"
 
 }
 
-window.sendMsg=async function(){
-
-let text=document.getElementById("msg").value
-
-await addDoc(collection(db,"messages"),{
-room:username+"_"+targetUser,
-user:username,
-text:text
 })
 
-}
+})
 
-window.callUser=async function(){
+document.getElementById("callBtn").onclick=async()=>{
 
 await addDoc(collection(db,"calls"),{
-from:username,
-to:targetUser
+
+caller:username,
+callee:activeUser,
+status:"calling"
+
 })
 
 }
 
-const incoming=query(collection(db,"calls"),where("to","==",username))
+const callQuery=query(collection(db,"calls"),where("callee","==",username))
 
-onSnapshot(incoming,(snap)=>{
+onSnapshot(callQuery,(snap)=>{
 
-snap.forEach(d=>{
+snap.forEach((d)=>{
 
 let data=d.data()
 
-document.getElementById("callpopup").style.display="block"
-document.getElementById("caller").innerText=data.from
+if(data.status=="calling"){
 
-window.acceptCall=function(){
+document.getElementById("incoming").style.display="block"
 
-document.getElementById("callpopup").style.display="none"
-
-}
-
-window.rejectCall=async function(){
-
-await deleteDoc(doc(db,"calls",d.id))
-document.getElementById("callpopup").style.display="none"
+document.getElementById("caller").innerText=data.caller
 
 }
 
