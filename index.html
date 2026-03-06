@@ -7,12 +7,12 @@
 body{font-family:sans-serif;background:#f0f0f0;text-align:center;margin:0;}
 #top{background:white;padding:10px;}
 .post{background:white;margin:10px auto;padding:10px;border-radius:10px;max-width:400px;position:relative;}
-.avatar{width:40px;height:40px;border-radius:50%;object-fit:cover;}
+.avatar{width:40px;height:40px;border-radius:50%;object-fit:cover;cursor:pointer;}
 .postimg{max-width:100%;border-radius:10px;margin-top:5px;}
 .delete{position:absolute;top:5px;right:5px;border:none;background:red;color:white;border-radius:10px;cursor:pointer;}
 .dark{background:#111;color:white;}
 .dark .post{background:#1e1e1e;}
-#profileDiv{display:none;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:#222;color:white;padding:15px;border-radius:10px;z-index:1000;font-family:sans-serif;width:300px;}
+#profileDiv{display:none;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:#222;color:white;padding:15px;border-radius:10px;z-index:1000;width:300px;}
 #dmMessages{height:120px;overflow-y:auto;background:#111;padding:5px;border-radius:5px;margin-bottom:5px;}
 #callVideo{display:none;width:100%;margin-top:5px;border-radius:10px;}
 </style>
@@ -69,23 +69,32 @@ let username = localStorage.getItem("username");
 let avatar = localStorage.getItem("avatar");
 let messages = {};
 let activeProfile = "";
+let peerConnection, localStream;
 
 // ---------------- Profile ----------------
 window.openProfile = function(user){
     activeProfile = user;
     document.getElementById("profileDiv").style.display="block";
     document.getElementById("profileNick").innerText = user;
-    if(!messages[user]) messages[user]=[];
+    if(!messages[user]) messages[user] = [];
     updateDM();
 };
-document.getElementById("closeProfile").onclick = ()=>{ document.getElementById("profileDiv").style.display="none"; document.getElementById("callVideo").style.display="none"; };
+document.getElementById("closeProfile").onclick = ()=>{
+    document.getElementById("profileDiv").style.display="none";
+    document.getElementById("callVideo").style.display="none";
+};
 
 // ---------------- Login ----------------
 window.login=function(){
     username=document.getElementById("nickname").value;
     let file=document.getElementById("avatarInput").files[0];
     let reader=new FileReader();
-    reader.onload=function(){ avatar=reader.result; localStorage.setItem("username",username); localStorage.setItem("avatar",avatar); location.reload(); }
+    reader.onload=function(){ 
+        avatar=reader.result; 
+        localStorage.setItem("username",username); 
+        localStorage.setItem("avatar",avatar); 
+        location.reload(); 
+    }
     reader.readAsDataURL(file);
 }
 
@@ -95,17 +104,29 @@ function afterLogin(){
     document.getElementById("app").style.display="block";
     document.getElementById("user").innerText=username;
     document.getElementById("myavatar").src=avatar;
-    if(username==="bladtikaa-design"){ document.getElementById("user").innerHTML+=' <span style="color:red;font-weight:bold;">DEVELOPER</span> <span style="background:black;color:red;border-radius:50%;padding:3px 6px;">✔</span>'; }
+    if(username==="bladtikaa-design"){ 
+        document.getElementById("user").innerHTML += ' <span style="color:red;font-weight:bold;">DEVELOPER</span> <span style="background:black;color:red;border-radius:50%;padding:3px 6px;">✔</span>';
+    }
     startRealtime();
+    startCamera();
 }
 if(username) afterLogin();
 
 // ---------------- Posts ----------------
 window.post=async function(){
     let text=document.getElementById("text").value;
-    let photoFile=document.getElementById("photo").files[0]; let photo="";
-    if(photoFile){ let reader=new FileReader(); reader.onload=async function(){ photo=reader.result; await addDoc(collection(db,"posts"),{user:username,avatar:avatar,text:text,photo:photo,like:0}); } reader.readAsDataURL(photoFile); }
-    else{ await addDoc(collection(db,"posts"),{user:username,avatar:avatar,text:text,photo:"",like:0}); }
+    let photoFile=document.getElementById("photo").files[0]; 
+    let photo="";
+    if(photoFile){ 
+        let reader=new FileReader(); 
+        reader.onload=async function(){ 
+            photo=reader.result; 
+            await addDoc(collection(db,"posts"),{user:username,avatar:avatar,text:text,photo:photo,like:0}); 
+        } 
+        reader.readAsDataURL(photoFile); 
+    } else{ 
+        await addDoc(collection(db,"posts"),{user:username,avatar:avatar,text:text,photo:"",like:0}); 
+    }
 }
 
 function startRealtime(){
@@ -113,15 +134,16 @@ function startRealtime(){
         document.getElementById("posts").innerHTML="";
         snapshot.forEach((docSnap)=>{
             let data=docSnap.data();
-            let div=document.createElement("div"); div.className="post";
+            let div=document.createElement("div"); 
+            div.className="post";
             let img=data.photo?`<img class='postimg' src='${data.photo}'>`:"";
             let del=(data.user===username)?`<button class='delete' onclick='delPost("${docSnap.id}")'>🗑</button>`:"";
-            div.innerHTML=del+`<img class='avatar' src='${data.avatar}' style='cursor:pointer' onclick='openProfile("${data.user}")'> <b style='cursor:pointer' onclick='openProfile("${data.user}")'>${data.user}</b><br>${data.text}<br>${img}<br><button onclick='like("${docSnap.id}",${data.like})'>👍 ${data.like}</button>`;
+            div.innerHTML=del+`<img class='avatar' src='${data.avatar}' onclick='openProfile("${data.user}")'> <b onclick='openProfile("${data.user}")'>${data.user}</b><br>${data.text}<br>${img}<br><button onclick='like("${docSnap.id}",${data.like})'>👍 ${data.like}</button>`;
             document.getElementById("posts").prepend(div);
         })
     });
 
-    // Messages
+    // Messages listener
     onSnapshot(collection(db,"messages"), snapshot=>{
         snapshot.docChanges().forEach(change=>{
             const data = change.doc.data();
@@ -141,14 +163,17 @@ window.like=async function(id,count){ await updateDoc(doc(db,"posts",id),{like:c
 window.delPost=async function(id){ await deleteDoc(doc(db,"posts",id)); }
 window.theme=function(){ document.body.classList.toggle("dark"); }
 
-// ---------------- DM ----------------
+// ---------------- Direct Messages ----------------
 document.getElementById("dmSend").onclick=async()=>{
-    const txt=document.getElementById("dmInput").value; if(!txt.trim()) return;
+    const txt=document.getElementById("dmInput").value; 
+    if(!txt.trim()) return;
     const msgObj={from:username,to:activeProfile,text:txt,time:Date.now()};
-    await addDoc(collection(db,"messages"),msgObj); document.getElementById("dmInput").value="";
+    await addDoc(collection(db,"messages"),msgObj); 
+    document.getElementById("dmInput").value="";
 }
 function updateDM(){
-    const box=document.getElementById("dmMessages"); box.innerHTML="";
+    const box=document.getElementById("dmMessages"); 
+    box.innerHTML="";
     messages[activeProfile].forEach(m=>{
         const side=(m.from===username)?"text-align:right;":"text-align:left;";
         box.innerHTML+=`<div style="${side}background:#333;margin:2px;padding:3px;border-radius:5px;">${m.from}: ${m.text}</div>`;
@@ -156,31 +181,33 @@ function updateDM(){
     box.scrollTop=box.scrollHeight;
 }
 
-// ---------------- Calls ----------------
-let localStream, peerConnection;
+// ---------------- WebRTC Calls ----------------
 const servers={iceServers:[{urls:"stun:stun.l.google.com:19302"}]};
-async function startCamera(){ localStream = await navigator.mediaDevices.getUserMedia({video:true,audio:true}); }
-startCamera();
+async function startCamera(){ localStream=await navigator.mediaDevices.getUserMedia({video:true,audio:true}); }
 
 document.getElementById("callUserBtn").onclick=async()=>{
-    const callee=activeProfile; if(!callee) return;
-    const callDoc=doc(collection(db,"calls"));
-    peerConnection=new RTCPeerConnection(servers);
+    const callee = activeProfile; if(!callee) return;
+    const callDoc = doc(collection(db,"calls"));
+    peerConnection = new RTCPeerConnection(servers);
     localStream.getTracks().forEach(track=>peerConnection.addTrack(track,localStream));
-    peerConnection.onicecandidate=event=>{ if(event.candidate){ setDoc(callDoc,{iceCandidates:[event.candidate]},{merge:true}); } };
-    peerConnection.ontrack=event=>{ document.getElementById("callVideo").style.display="block"; document.getElementById("callVideo").srcObject=event.streams[0]; };
-    const offer=await peerConnection.createOffer(); await peerConnection.setLocalDescription(offer);
+    peerConnection.onicecandidate = event=>{ if(event.candidate) setDoc(callDoc,{ice:[event.candidate]},{merge:true}); };
+    peerConnection.ontrack = event=>{ 
+        document.getElementById("callVideo").style.display="block"; 
+        document.getElementById("callVideo").srcObject = event.streams[0]; 
+    };
+    const offer = await peerConnection.createOffer(); 
+    await peerConnection.setLocalDescription(offer);
     await setDoc(callDoc,{caller:username,callee:callee,offer:offer.toJSON(),status:"calling"},{merge:true});
     onSnapshot(callDoc, async snap=>{
-        const data=snap.data();
+        const data = snap.data();
         if(data && data.answer){ await peerConnection.setRemoteDescription(new RTCSessionDescription(data.answer)); }
     });
-};
+}
 
 // Accept звонка
 onSnapshot(collection(db,"calls"), snapshot=>{
     snapshot.docChanges().forEach(async change=>{
-        const data=change.doc.data();
+        const data = change.doc.data();
         if(data.callee===username && change.type==="added"){
             openProfile(data.caller);
             const btn=document.getElementById("callUserBtn");
@@ -190,15 +217,6 @@ onSnapshot(collection(db,"calls"), snapshot=>{
                 peerConnection=new RTCPeerConnection(servers);
                 localStream.getTracks().forEach(track=>peerConnection.addTrack(track,localStream));
                 await peerConnection.setRemoteDescription(new RTCSessionDescription(data.offer));
-                const answer=await peerConnection.createAnswer();
+                const answer = await peerConnection.createAnswer();
                 await peerConnection.setLocalDescription(answer);
-                await setDoc(change.doc.ref,{answer:answer.toJSON(),status:"accepted"},{merge:true});
-                peerConnection.ontrack=event=>{ document.getElementById("callVideo").srcObject=event.streams[0]; };
-            };
-        }
-    });
-});
-</script>
-
-</body>
-</html>
+                await setDoc(change.doc.ref,{answer:answer.toJSON(),
