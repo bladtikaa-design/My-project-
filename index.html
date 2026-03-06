@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>My Social</title>
+<style>
+body{
+font-family:sans-serif;
+background:#f0f0f0;
+text-align:center;
+}
+
+.post{
+background:white;
+margin:10px;
+padding:10px;
+border-radius:10px;
+}
+</style>
+</head>
+
+<body>
+
+<h1>Моя соц сеть</h1>
+
+<input id="text" placeholder="Напиши пост">
+<button onclick="post()">Опубликовать</button>
+
+<div id="posts"></div>
+
+<script>
+function post(){
+let text=document.getElementById("text").value
+let div=document.createElement("div")
+div.className="post"
+div.innerText=text
+document.getElementById("posts").prepend(div)
+}
+</script>
+
+</body>
+</html>
