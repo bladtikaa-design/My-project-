@@ -15,6 +15,7 @@ body{font-family:sans-serif;background:#f0f0f0;text-align:center;margin:0;}
 #profileDiv{display:none;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:#222;color:white;padding:15px;border-radius:10px;z-index:1000;width:300px;}
 #dmMessages{height:120px;overflow-y:auto;background:#111;padding:5px;border-radius:5px;margin-bottom:5px;}
 #callVideo{display:none;width:100%;margin-top:5px;border-radius:10px;}
+#incomingCall{display:none;background:#333;color:white;padding:10px;border-radius:10px;margin-bottom:5px;}
 </style>
 </head>
 <body>
@@ -44,10 +45,16 @@ body{font-family:sans-serif;background:#f0f0f0;text-align:center;margin:0;}
 <div id="dmMessages"></div>
 <input id="dmInput" placeholder="Написать..." style="width:70%;padding:5px;border-radius:5px;border:none;">
 <button id="dmSend" style="padding:5px 8px;border:none;background:#444;color:white;border-radius:5px;cursor:pointer;">➤</button><br><br>
-<button id="callUserBtn">Позвонить</button>
-<button id="closeProfile">Закрыть</button>
-<video id="callVideo" autoplay playsinline></video>
+<div id="incomingCall">
+<b id="callerName"></b> звонит!<br>
+<button id="acceptCallBtn">Принять</button>
+<button id="rejectCallBtn">Отклонить</button>
 </div>
+<video id="callVideo" autoplay playsinline></video><br>
+<button id="closeProfile">Закрыть</button>
+</div>
+
+<audio id="ringtone" src="https://actions.google.com/sounds/v1/alarms/alarm_clock.ogg" preload="auto"></audio>
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app.js";
@@ -70,6 +77,7 @@ let avatar = localStorage.getItem("avatar");
 let messages = {};
 let activeProfile = "";
 let peerConnection, localStream;
+let currentCallDoc = null;
 
 // ---------------- Profile ----------------
 window.openProfile = function(user){
@@ -82,6 +90,7 @@ window.openProfile = function(user){
 document.getElementById("closeProfile").onclick = ()=>{
     document.getElementById("profileDiv").style.display="none";
     document.getElementById("callVideo").style.display="none";
+    endCall();
 };
 
 // ---------------- Login ----------------
@@ -135,6 +144,7 @@ window.post=async function(){
     }
 }
 
+// ---------------- Real-time posts & messages ----------------
 function startRealtime(){
     onSnapshot(collection(db,"posts"),(snapshot)=>{
         document.getElementById("posts").innerHTML="";
@@ -191,47 +201,50 @@ function updateDM(){
 const servers={iceServers:[{urls:"stun:stun.l.google.com:19302"}]};
 async function startCamera(){ localStream=await navigator.mediaDevices.getUserMedia({video:true,audio:true}); }
 
-document.getElementById("callUserBtn").onclick=async()=>{
-    const callee = activeProfile; if(!callee) return;
-    const callDoc = doc(collection(db,"calls"));
-    peerConnection = new RTCPeerConnection(servers);
-    localStream.getTracks().forEach(track=>peerConnection.addTrack(track,localStream));
-    peerConnection.onicecandidate = event=>{ if(event.candidate) setDoc(callDoc,{ice:[event.candidate]},{merge:true}); };
-    peerConnection.ontrack = event=>{ 
-        document.getElementById("callVideo").style.display="block"; 
-        document.getElementById("callVideo").srcObject = event.streams[0]; 
-    };
-    const offer = await peerConnection.createOffer(); 
-    await peerConnection.setLocalDescription(offer);
-    await setDoc(callDoc,{caller:username,callee:callee,offer:offer.toJSON(),status:"calling"},{merge:true});
-    onSnapshot(callDoc, async snap=>{
-        const data = snap.data();
-        if(data && data.answer){ await peerConnection.setRemoteDescription(new RTCSessionDescription(data.answer)); }
-    });
+async function endCall(){
+    if(peerConnection){ peerConnection.close(); peerConnection=null; }
+    currentCallDoc=null;
+    document.getElementById("callVideo").style.display="none";
 }
 
-// Accept звонка
+// ---------------- Make call ----------------
+document.getElementById("callUserBtn").onclick=async()=>{
+    if(!activeProfile) return;
+    const callDocRef = doc(collection(db,"calls"));
+    currentCallDoc = callDocRef;
+
+    peerConnection = new RTCPeerConnection(servers);
+    localStream.getTracks().forEach(track=>peerConnection.addTrack(track,localStream));
+    peerConnection.ontrack = e=>{document.getElementById("callVideo").style.display="block"; document.getElementById("callVideo").srcObject = e.streams[0];};
+    peerConnection.onicecandidate = event=>{
+        if(event.candidate) setDoc(callDocRef,{ice:[event.candidate]},{merge:true});
+    }
+
+    const offer = await peerConnection.createOffer();
+    await peerConnection.setLocalDescription(offer);
+    await setDoc(callDocRef,{caller:username,callee:activeProfile,offer:offer.toJSON(),status:"calling"},{merge:true});
+};
+
+// ---------------- Incoming calls ----------------
 onSnapshot(collection(db,"calls"), snapshot=>{
     snapshot.docChanges().forEach(async change=>{
         const data = change.doc.data();
-        if(data.callee===username && change.type==="added"){
+        if(data.callee===username && change.type==="added" && data.status==="calling"){
+            // Показываем popup входящего звонка
             openProfile(data.caller);
-            const btn=document.getElementById("callUserBtn");
-            btn.innerText="Принять звонок";
-            btn.onclick=async()=>{
+            document.getElementById("incomingCall").style.display="block";
+            document.getElementById("callerName").innerText=data.caller;
+            document.getElementById("ringtone").play();
+
+            // Принять звонок
+            document.getElementById("acceptCallBtn").onclick=async()=>{
+                document.getElementById("incomingCall").style.display="none";
                 document.getElementById("callVideo").style.display="block";
-                peerConnection=new RTCPeerConnection(servers);
+
+                peerConnection = new RTCPeerConnection(servers);
                 localStream.getTracks().forEach(track=>peerConnection.addTrack(track,localStream));
                 await peerConnection.setRemoteDescription(new RTCSessionDescription(data.offer));
                 const answer = await peerConnection.createAnswer();
                 await peerConnection.setLocalDescription(answer);
                 await setDoc(change.doc.ref,{answer:answer.toJSON(),status:"accepted"},{merge:true});
-                peerConnection.ontrack=event=>{ document.getElementById("callVideo").srcObject=event.streams[0]; };
-            };
-        }
-    });
-});
-</script>
-
-</body>
-</html>
+                peerConnection.ontrack=e=>{document.getElementById("callVideo").srcObject=e.streams[0
