@@ -144,7 +144,7 @@ background:#1e1e1e;
 
 <div id="verify" style="display:none">
 
-<p>verify code is send on your email</p>
+<p>Enter verification code</p>
 
 <input id="code" class="bubble" placeholder="code">
 
@@ -154,12 +154,12 @@ background:#1e1e1e;
 
 </div>
 
-<br><br>
+<br>
 
 <h3>Nickname</h3>
 
 <input id="nickname" class="bubble"><br><br>
-<input type="file" id="avatarInput"><br><br>
+<input type="file" id="avatarInput">
 
 </div>
 
@@ -208,7 +208,6 @@ const db = getFirestore(app);
 
 let username=""
 let avatar=""
-
 let verifyCode=""
 
 window.checkEmail=function(){
@@ -222,12 +221,10 @@ return
 
 }
 
-document.getElementById("error").style.color="green"
-document.getElementById("error").innerText="verify code is send on your email"
-
 verifyCode=Math.floor(1000+Math.random()*9000)
 
-console.log("verification code:",verifyCode)
+document.getElementById("error").style.color="green"
+document.getElementById("error").innerText="Your code: "+verifyCode
 
 document.getElementById("verify").style.display="block"
 
@@ -242,7 +239,6 @@ if(code==verifyCode){
 username=document.getElementById("nickname").value
 
 let file=document.getElementById("avatarInput").files[0]
-
 let reader=new FileReader()
 
 reader.onload=function(){
