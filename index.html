@@ -63,21 +63,47 @@ background:#1e1e1e;
 
 #profile{
 position:fixed;
-top:50%;
-left:50%;
-transform:translate(-50%,-50%);
+top:0;
+left:0;
+width:100%;
+height:100%;
+background:#000000aa;
+display:none;
+align-items:center;
+justify-content:center;
+}
+
+#profileBox{
 background:white;
 padding:20px;
 border-radius:15px;
-display:none;
+text-align:center;
 }
 
-#callPopup{
+#chat{
+position:fixed;
+bottom:0;
+right:0;
+width:300px;
+height:400px;
+background:white;
+border-radius:10px 10px 0 0;
+display:none;
+flex-direction:column;
+}
+
+#messages{
+flex:1;
+overflow:auto;
+padding:10px;
+}
+
+#callpopup{
 position:fixed;
 top:20px;
 left:50%;
 transform:translateX(-50%);
-background:#1e90ff;
+background:#1e88ff;
 color:white;
 padding:15px;
 border-radius:10px;
@@ -86,10 +112,12 @@ display:none;
 
 .online{
 color:green;
+font-size:12px;
 }
 
 .offline{
 color:gray;
+font-size:12px;
 }
 
 </style>
@@ -130,71 +158,59 @@ color:gray;
 
 </div>
 
-
 <div id="profile">
+<div id="profileBox">
 
-<img id="pavatar" class="avatar"><br>
+<img id="pavatar" class="avatar"><br><br>
 <b id="pname"></b><br>
-<span id="status"></span>
+<span id="pstatus"></span><br><br>
 
-<br><br>
-
-<button onclick="startChat()">Direct Messages</button>
-<button onclick="callUser()">📞 Call</button>
-
-<br><br>
+<button onclick="openChat()">Direct Messages</button>
+<button onclick="callUser()">Call</button><br><br>
 
 <button onclick="closeProfile()">Close</button>
 
 </div>
+</div>
 
+<div id="chat">
 
-<div id="callPopup">
+<div id="messages"></div>
+
+<input id="msg" placeholder="message">
+<button onclick="sendMsg()">Send</button>
+
+</div>
+
+<div id="callpopup">
 
 <b id="caller"></b> calling...
 
 <br><br>
 
 <button onclick="acceptCall()">Accept</button>
-<button onclick="declineCall()">Decline</button>
+<button onclick="rejectCall()">Reject</button>
 
 </div>
-
-
 
 <script type="module">
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app.js";
-
-import { 
-getFirestore,
-collection,
-addDoc,
-onSnapshot,
-updateDoc,
-doc,
-deleteDoc,
-setDoc,
-getDoc
-} from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js";
-
+import { getFirestore, collection, addDoc, onSnapshot, updateDoc, doc, deleteDoc, query, where, setDoc } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js";
 
 const firebaseConfig = {
 apiKey: "AIzaSyAE46eiz4XltTwoPz4mVFG6kvPqAIhVf10",
 authDomain: "mysocial-dabdf.firebaseapp.com",
-projectId: "mysocial-dabdf",
-storageBucket: "mysocial-dabdf.firebasestorage.app",
-messagingSenderId: "812073291348",
-appId: "1:812073291348:web:e68dbf6c412c72de5aa7c1"
+projectId: "mysocial-dabdf"
 };
 
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-
-
 let username=localStorage.getItem("username")
 let avatar=localStorage.getItem("avatar")
+
+let targetUser=""
 
 if(username){
 
@@ -204,10 +220,7 @@ document.getElementById("app").style.display="block"
 document.getElementById("user").innerText=username
 document.getElementById("myavatar").src=avatar
 
-setDoc(doc(db,"users",username),{
-avatar:avatar,
-online:true
-})
+setDoc(doc(db,"online",username),{online:true})
 
 }
 
@@ -216,7 +229,6 @@ window.login=function(){
 username=document.getElementById("nickname").value
 
 let file=document.getElementById("avatarInput").files[0]
-
 let reader=new FileReader()
 
 reader.onload=function(){
@@ -234,37 +246,9 @@ reader.readAsDataURL(file)
 
 }
 
-
-
 window.post=async function(){
 
 let text=document.getElementById("text").value
-let photoFile=document.getElementById("photo").files[0]
-let photo=""
-
-if(photoFile){
-
-let reader=new FileReader()
-
-reader.onload=async function(){
-
-photo=reader.result
-
-await addDoc(collection(db,"posts"),{
-
-user:username,
-avatar:avatar,
-text:text,
-photo:photo,
-like:0
-
-})
-
-}
-
-reader.readAsDataURL(photoFile)
-
-}else{
 
 await addDoc(collection(db,"posts"),{
 
@@ -278,10 +262,6 @@ like:0
 
 }
 
-}
-
-
-
 onSnapshot(collection(db,"posts"),(snapshot)=>{
 
 document.getElementById("posts").innerHTML=""
@@ -293,29 +273,11 @@ let data=docSnap.data()
 let div=document.createElement("div")
 div.className="post"
 
-let img=""
-
-if(data.photo){
-
-img="<img class='postimg' src='"+data.photo+"'>"
-
-}
-
-let del=""
-
-if(data.user==username){
-
-del="<button class='delete' onclick='delPost(\""+docSnap.id+"\")'>🗑</button>"
-
-}
-
 div.innerHTML=
 
-del+
+"<img onclick='openProfile(\""+data.user+"\",\""+data.avatar+"\")' class='avatar' src='"+data.avatar+"'> <b>"+data.user+"</b><br>"+
 
-"<img class='avatar' onclick='openProfile(\""+data.user+"\",\""+data.avatar+"\")' src='"+data.avatar+"'> <b>"+data.user+"</b><br>"+
-
-data.text+"<br>"+img+
+data.text+
 
 "<br><button onclick='like(\""+docSnap.id+"\","+data.like+")'>👍 "+data.like+"</button>"
 
@@ -325,25 +287,11 @@ document.getElementById("posts").prepend(div)
 
 })
 
-
-
 window.like=async function(id,count){
 
-let ref=doc(db,"posts",id)
-
-await updateDoc(ref,{like:count+1})
+await updateDoc(doc(db,"posts",id),{like:count+1})
 
 }
-
-
-
-window.delPost=async function(id){
-
-await deleteDoc(doc(db,"posts",id))
-
-}
-
-
 
 window.theme=function(){
 
@@ -351,40 +299,31 @@ document.body.classList.toggle("dark")
 
 }
 
+window.openProfile=function(name,av){
 
+targetUser=name
 
-let selectedUser=""
-
-
-
-window.openProfile=async function(user,av){
-
-selectedUser=user
-
-document.getElementById("profile").style.display="block"
-
-document.getElementById("pname").innerText=user
+document.getElementById("profile").style.display="flex"
+document.getElementById("pname").innerText=name
 document.getElementById("pavatar").src=av
 
-let snap=await getDoc(doc(db,"users",user))
+const q=query(collection(db,"online"),where("__name__","==",name))
 
-if(snap.exists()){
+onSnapshot(q,(s)=>{
 
-if(snap.data().online){
+if(s.empty){
 
-document.getElementById("status").innerHTML="<span class='online'>● online</span>"
+document.getElementById("pstatus").innerHTML="<span class='offline'>offline</span>"
 
 }else{
 
-document.getElementById("status").innerHTML="<span class='offline'>● offline</span>"
+document.getElementById("pstatus").innerHTML="<span class='online'>online</span>"
 
 }
 
-}
+})
 
 }
-
-
 
 window.closeProfile=function(){
 
@@ -392,70 +331,79 @@ document.getElementById("profile").style.display="none"
 
 }
 
+window.openChat=function(){
 
+document.getElementById("chat").style.display="flex"
+
+const q=query(collection(db,"messages"),where("room","==",username+"_"+targetUser))
+
+onSnapshot(q,(snap)=>{
+
+document.getElementById("messages").innerHTML=""
+
+snap.forEach(d=>{
+
+let m=d.data()
+
+document.getElementById("messages").innerHTML+=
+
+"<div><b>"+m.user+":</b> "+m.text+"</div>"
+
+})
+
+})
+
+}
+
+window.sendMsg=async function(){
+
+let text=document.getElementById("msg").value
+
+await addDoc(collection(db,"messages"),{
+
+room:username+"_"+targetUser,
+user:username,
+text:text
+
+})
+
+}
 
 window.callUser=async function(){
 
-await setDoc(doc(db,"calls",selectedUser),{
+await addDoc(collection(db,"calls"),{
 
-from:username
+from:username,
+to:targetUser,
+status:"call"
 
 })
 
 }
 
+const incoming=query(collection(db,"calls"),where("to","==",username))
 
+onSnapshot(incoming,(snap)=>{
 
-onSnapshot(doc(db,"calls",username),(snap)=>{
+snap.forEach(d=>{
 
-if(snap.exists()){
+let data=d.data()
 
-document.getElementById("callPopup").style.display="block"
-
-document.getElementById("caller").innerText=snap.data().from
-
-}
-
-})
-
-
+document.getElementById("callpopup").style.display="block"
+document.getElementById("caller").innerText=data.from
 
 window.acceptCall=function(){
 
-alert("Call started")
-
-document.getElementById("callPopup").style.display="none"
-
-deleteDoc(doc(db,"calls",username))
+document.getElementById("callpopup").style.display="none"
 
 }
 
+window.rejectCall=async function(){
 
-
-window.declineCall=function(){
-
-document.getElementById("callPopup").style.display="none"
-
-deleteDoc(doc(db,"calls",username))
+await deleteDoc(doc(db,"calls",d.id))
+document.getElementById("callpopup").style.display="none"
 
 }
-
-
-
-window.startChat=function(){
-
-alert("DM coming soon")
-
-}
-
-
-
-window.addEventListener("beforeunload",()=>{
-
-setDoc(doc(db,"users",username),{
-
-avatar:avatar,
-online:false
 
 })
 
