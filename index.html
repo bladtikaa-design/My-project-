@@ -3,265 +3,399 @@
 <head>
 <meta charset="UTF-8">
 <title>My Social</title>
+
 <style>
-body{font-family:sans-serif;background:#f0f0f0;text-align:center;margin:0;}
-#top{background:white;padding:10px;}
-.post{background:white;margin:10px auto;padding:10px;border-radius:10px;max-width:400px;position:relative;}
-.avatar{width:40px;height:40px;border-radius:50%;object-fit:cover;cursor:pointer;}
-.postimg{max-width:100%;border-radius:10px;margin-top:5px;}
-.delete{position:absolute;top:5px;right:5px;border:none;background:red;color:white;border-radius:10px;cursor:pointer;}
-.dark{background:#111;color:white;}
-.dark .post{background:#1e1e1e;}
-#profileDiv{display:none;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:#222;color:white;padding:15px;border-radius:10px;z-index:1000;width:300px;}
-#dmMessages{height:120px;overflow-y:auto;background:#111;padding:5px;border-radius:5px;margin-bottom:5px;}
-#callVideo{display:none;width:100%;margin-top:5px;border-radius:10px;}
-#incomingCall{display:none;background:#333;color:white;padding:10px;border-radius:10px;margin-bottom:5px;}
-#callUserBtn{padding:5px 8px;border:none;background:blue;color:white;border-radius:5px;cursor:pointer;margin-bottom:5px;}
+
+body{
+font-family:sans-serif;
+background:#f0f0f0;
+text-align:center;
+margin:0;
+}
+
+#top{
+background:white;
+padding:10px;
+}
+
+.post{
+background:white;
+margin:10px auto;
+padding:10px;
+border-radius:10px;
+max-width:400px;
+position:relative;
+}
+
+.avatar{
+width:40px;
+height:40px;
+border-radius:50%;
+object-fit:cover;
+cursor:pointer;
+}
+
+.postimg{
+max-width:100%;
+border-radius:10px;
+margin-top:5px;
+}
+
+.delete{
+position:absolute;
+top:5px;
+right:5px;
+border:none;
+background:red;
+color:white;
+border-radius:10px;
+cursor:pointer;
+}
+
+.dark{
+background:#111;
+color:white;
+}
+
+.dark .post{
+background:#1e1e1e;
+}
+
+#profile{
+position:fixed;
+top:50%;
+left:50%;
+transform:translate(-50%,-50%);
+background:#222;
+color:white;
+padding:15px;
+border-radius:10px;
+display:none;
+width:300px;
+}
+
+#messages{
+height:120px;
+overflow:auto;
+background:#111;
+padding:5px;
+border-radius:5px;
+}
+
+.status{
+font-size:12px;
+}
+
+.online{
+color:#00ff66;
+}
+
+.offline{
+color:#aaa;
+}
+
+#incoming{
+display:none;
+background:#333;
+padding:10px;
+border-radius:10px;
+}
+
+video{
+width:100%;
+border-radius:10px;
+}
+
 </style>
 </head>
+
 <body>
 
 <div id="login">
+
 <h2>Nickname</h2>
+
 <input id="nickname"><br><br>
 <input type="file" id="avatarInput"><br><br>
+
 <button onclick="login()">Enter</button>
+
 </div>
 
 <div id="app" style="display:none">
+
 <div id="top">
+
 <img id="myavatar" class="avatar">
 <b id="user"></b>
+
 <button onclick="theme()">🌙</button>
+
 </div>
+
 <br>
+
 <input id="text" placeholder="Write post"><br><br>
 <input type="file" id="photo"><br><br>
+
 <button onclick="post()">Post</button>
+
 <div id="posts"></div>
+
 </div>
 
-<div id="profileDiv">
-<b id="profileNick"></b><br>
-<button id="callUserBtn">📞 Позвонить</button><br><br>
-<div id="dmMessages"></div>
-<input id="dmInput" placeholder="Написать..." style="width:70%;padding:5px;border-radius:5px;border:none;">
-<button id="dmSend">➤</button><br><br>
-<div id="incomingCall">
-<b id="callerName"></b> звонит!<br>
-<button id="acceptCallBtn">Принять</button>
-<button id="rejectCallBtn">Отклонить</button>
-</div>
-<video id="callVideo" autoplay playsinline></video><br>
-<button id="closeProfile">Закрыть</button>
+<div id="profile">
+
+<b id="pname"></b>
+<div id="pstatus" class="status"></div>
+
+<br>
+
+<button id="callBtn">📞 Call</button>
+
+<br><br>
+
+<div id="messages"></div>
+
+<input id="msg" placeholder="message">
+<button id="send">Send</button>
+
+<br><br>
+
+<div id="incoming">
+
+<b id="caller"></b> calling
+
+<br>
+
+<button id="accept">Accept</button>
+<button id="reject">Reject</button>
+
 </div>
 
-<audio id="ringtone" src="https://actions.google.com/sounds/v1/alarms/alarm_clock.ogg" preload="auto"></audio>
+<video id="video" autoplay playsinline></video>
+
+<br>
+
+<button onclick="closeProfile()">Close</button>
+
+</div>
 
 <script type="module">
+
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app.js";
-import { getFirestore, collection, addDoc, onSnapshot, updateDoc, doc, deleteDoc, setDoc } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js";
+import { getFirestore, collection, addDoc, onSnapshot, updateDoc, doc, deleteDoc, setDoc, query, where } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js";
 
 const firebaseConfig = {
-apiKey:"AIzaSyAE46eiz4XltTwoPz4mVFG6kvPqAIhVf10",
-authDomain:"mysocial-dabdf.firebaseapp.com",
-projectId:"mysocial-dabdf",
-storageBucket:"mysocial-dabdf.firebasestorage.app",
-messagingSenderId:"812073291348",
-appId:"1:812073291348:web:e68dbf6c412c72de5aa7c1",
-measurementId:"G-24XWVXT1HV"
+apiKey: "AIzaSyAE46eiz4XltTwoPz4mVFG6kvPqAIhVf10",
+authDomain: "mysocial-dabdf.firebaseapp.com",
+projectId: "mysocial-dabdf",
+storageBucket: "mysocial-dabdf.firebasestorage.app",
+messagingSenderId: "812073291348",
+appId: "1:812073291348:web:e68dbf6c412c72de5aa7c1"
 };
+
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-let username = localStorage.getItem("username");
-let avatar = localStorage.getItem("avatar");
-let messages = {};
-let activeProfile = "";
-let peerConnection, localStream;
-let currentCallDoc = null;
+let username=localStorage.getItem("username")
+let avatar=localStorage.getItem("avatar")
 
-// ---------------- Profile ----------------
-window.openProfile = function(user){
-    activeProfile = user;
-    document.getElementById("profileDiv").style.display="block";
-    document.getElementById("profileNick").innerText = user;
-    if(!messages[user]) messages[user] = [];
-    updateDM();
-};
-document.getElementById("closeProfile").onclick = ()=>{
-    document.getElementById("profileDiv").style.display="none";
-    document.getElementById("callVideo").style.display="none";
-    endCall();
-};
+let activeUser=""
 
-// ---------------- Login ----------------
-window.login=function(){
-    username=document.getElementById("nickname").value;
-    if(!username) return alert("Введите ник!");
-    let file=document.getElementById("avatarInput").files[0];
-    if(!file) return alert("Выберите аватар!");
-    let reader=new FileReader();
-    reader.onload=function(){ 
-        avatar=reader.result; 
-        localStorage.setItem("username",username); 
-        localStorage.setItem("avatar",avatar); 
-        afterLogin();
-    }
-    reader.readAsDataURL(file);
+if(username){
+
+afterLogin()
+
 }
 
-// ---------------- After Login ----------------
 function afterLogin(){
-    document.getElementById("login").style.display="none";
-    document.getElementById("app").style.display="block";
-    document.getElementById("user").innerText=username;
-    document.getElementById("myavatar").src=avatar;
-    if(username==="bladtikaa-design"){ 
-        document.getElementById("user").innerHTML += ' <span style="color:red;font-weight:bold;">DEVELOPER</span> <span style="background:black;color:red;border-radius:50%;padding:3px 6px;">✔</span>';
-    }
-    startRealtime();
-    startCamera();
+
+document.getElementById("login").style.display="none"
+document.getElementById("app").style.display="block"
+
+document.getElementById("user").innerText=username
+document.getElementById("myavatar").src=avatar
+
+setDoc(doc(db,"status",username),{online:true})
+
 }
 
-// ---------------- Check existing user ----------------
-if(username && avatar){
-    afterLogin();
-} else {
-    document.getElementById("login").style.display="block";
+window.login=function(){
+
+username=document.getElementById("nickname").value
+
+let file=document.getElementById("avatarInput").files[0]
+
+let reader=new FileReader()
+
+reader.onload=function(){
+
+avatar=reader.result
+
+localStorage.setItem("username",username)
+localStorage.setItem("avatar",avatar)
+
+afterLogin()
+
 }
 
-// ---------------- Posts ----------------
+reader.readAsDataURL(file)
+
+}
+
 window.post=async function(){
-    let text=document.getElementById("text").value;
-    let photoFile=document.getElementById("photo").files[0]; 
-    let photo="";
-    if(photoFile){ 
-        let reader=new FileReader(); 
-        reader.onload=async function(){ 
-            photo=reader.result; 
-            await addDoc(collection(db,"posts"),{user:username,avatar:avatar,text:text,photo:photo,like:0}); 
-        } 
-        reader.readAsDataURL(photoFile); 
-    } else{ 
-        await addDoc(collection(db,"posts"),{user:username,avatar:avatar,text:text,photo:"",like:0}); 
-    }
+
+let text=document.getElementById("text").value
+
+await addDoc(collection(db,"posts"),{
+
+user:username,
+avatar:avatar,
+text:text,
+like:0
+
+})
+
 }
 
-// ---------------- Real-time posts & messages ----------------
-function startRealtime(){
-    onSnapshot(collection(db,"posts"),(snapshot)=>{
-        document.getElementById("posts").innerHTML="";
-        snapshot.forEach((docSnap)=>{
-            let data=docSnap.data();
-            let div=document.createElement("div"); 
-            div.className="post";
-            let img=data.photo?`<img class='postimg' src='${data.photo}'>`:"";
-            let del=(data.user===username)?`<button class='delete' onclick='delPost("${docSnap.id}")'>🗑</button>`:"";
-            div.innerHTML=del+`<img class='avatar' src='${data.avatar}' onclick='openProfile("${data.user}")'> <b onclick='openProfile("${data.user}")'>${data.user}</b><br>${data.text}<br>${img}<br><button onclick='like("${docSnap.id}",${data.like})'>👍 ${data.like}</button>`;
-            document.getElementById("posts").prepend(div);
-        })
-    });
+onSnapshot(collection(db,"posts"),(snap)=>{
 
-    // Messages listener
-    onSnapshot(collection(db,"messages"), snapshot=>{
-        snapshot.docChanges().forEach(change=>{
-            const data = change.doc.data();
-            if((data.from===username && data.to) || (data.to===username && data.from)){
-                if(!messages[data.from]) messages[data.from]=[];
-                if(!messages[data.to]) messages[data.to]=[];
-                if(data.to===username) messages[data.from].push(data);
-                else messages[data.to].push(data);
-                if(activeProfile===data.from || activeProfile===data.to) updateDM();
-            }
-        });
-    });
+document.getElementById("posts").innerHTML=""
+
+snap.forEach((docSnap)=>{
+
+let d=docSnap.data()
+
+let div=document.createElement("div")
+
+div.className="post"
+
+div.innerHTML=
+
+"<img class='avatar' src='"+d.avatar+"' onclick='openProfile(\""+d.user+"\")'> <b onclick='openProfile(\""+d.user+"\")'>"+d.user+"</b><br>"+
+
+d.text+
+
+"<br><button onclick='like(\""+docSnap.id+"\","+d.like+")'>👍 "+d.like+"</button>"
+
+document.getElementById("posts").prepend(div)
+
+})
+
+})
+
+window.like=async function(id,count){
+
+await updateDoc(doc(db,"posts",id),{like:count+1})
+
 }
 
-// ---------------- Likes / Delete / Theme ----------------
-window.like=async function(id,count){ await updateDoc(doc(db,"posts",id),{like:count+1}); }
-window.delPost=async function(id){ await deleteDoc(doc(db,"posts",id)); }
-window.theme=function(){ document.body.classList.toggle("dark"); }
+window.openProfile=function(user){
 
-// ---------------- Direct Messages ----------------
-document.getElementById("dmSend").onclick=async()=>{
-    const txt=document.getElementById("dmInput").value; 
-    if(!txt.trim()) return;
-    const msgObj={from:username,to:activeProfile,text:txt,time:Date.now()};
-    await addDoc(collection(db,"messages"),msgObj); 
-    document.getElementById("dmInput").value="";
-}
-function updateDM(){
-    const box=document.getElementById("dmMessages"); 
-    box.innerHTML="";
-    messages[activeProfile].forEach(m=>{
-        const side=(m.from===username)?"text-align:right;":"text-align:left;";
-        box.innerHTML+=`<div style="${side}background:#333;margin:2px;padding:3px;border-radius:5px;">${m.from}: ${m.text}</div>`;
-    });
-    box.scrollTop=box.scrollHeight;
-}
+activeUser=user
 
-// ---------------- WebRTC Calls ----------------
-const servers={iceServers:[{urls:"stun:stun.l.google.com:19302"}]};
-async function startCamera(){ localStream=await navigator.mediaDevices.getUserMedia({video:true,audio:true}); }
+document.getElementById("profile").style.display="block"
 
-async function endCall(){
-    if(peerConnection){ peerConnection.close(); peerConnection=null; }
-    currentCallDoc=null;
-    document.getElementById("callVideo").style.display="none";
+document.getElementById("pname").innerText=user
+
+const q=query(collection(db,"status"),where("__name__","==",user))
+
+onSnapshot(q,(snap)=>{
+
+snap.forEach((d)=>{
+
+if(d.data().online){
+
+document.getElementById("pstatus").innerHTML="🟢 online"
+
+}else{
+
+document.getElementById("pstatus").innerHTML="⚪ offline"
+
 }
 
-// ---------------- Make call ----------------
-document.getElementById("callUserBtn").addEventListener("click", async ()=>{
-    if(!activeProfile) return;
-    const callDocRef = doc(collection(db,"calls"));
-    currentCallDoc = callDocRef;
+})
 
-    peerConnection = new RTCPeerConnection(servers);
-    localStream.getTracks().forEach(track=>peerConnection.addTrack(track,localStream));
-    peerConnection.ontrack = e=>{
-        document.getElementById("callVideo").style.display="block";
-        document.getElementById("callVideo").srcObject = e.streams[0];
-    };
-    peerConnection.onicecandidate = event=>{
-        if(event.candidate) setDoc(callDocRef,{ice:[event.candidate]},{merge:true});
-    }
+})
 
-    const offer = await peerConnection.createOffer();
-    await peerConnection.setLocalDescription(offer);
-    await setDoc(callDocRef,{caller:username,callee:activeProfile,offer:offer.toJSON(),status:"calling"},{merge:true});
-});
+}
 
-// ---------------- Incoming calls ----------------
-onSnapshot(collection(db,"calls"), snapshot=>{
-    snapshot.docChanges().forEach(async change=>{
-        const data = change.doc.data();
-        if(data.callee===username && change.type==="added" && data.status==="calling"){
-            openProfile(data.caller);
-            document.getElementById("incomingCall").style.display="block";
-            document.getElementById("callerName").innerText=data.caller;
-            document.getElementById("ringtone").play();
+window.closeProfile=function(){
 
-            document.getElementById("acceptCallBtn").onclick=async()=>{
-                document.getElementById("incomingCall").style.display="none";
-                document.getElementById("callVideo").style.display="block";
+document.getElementById("profile").style.display="none"
 
-                peerConnection = new RTCPeerConnection(servers);
-                localStream.getTracks().forEach(track=>peerConnection.addTrack(track,localStream));
-                await peerConnection.setRemoteDescription(new RTCSessionDescription(data.offer));
-                const answer = await peerConnection.createAnswer();
-                await peerConnection.setLocalDescription(answer);
-                await setDoc(change.doc.ref,{answer:answer.toJSON(),status:"accepted"},{merge:true});
-                peerConnection.ontrack=e=>{document.getElementById("callVideo").srcObject=e.streams[0];};
-            };
+}
 
-            document.getElementById("rejectCallBtn").onclick=()=>{
-                document.getElementById("incomingCall").style.display="none";
-                endCall();
-            }
-        }
-    });
-});
+document.getElementById("send").onclick=async()=>{
+
+let txt=document.getElementById("msg").value
+
+await addDoc(collection(db,"messages"),{
+
+from:username,
+to:activeUser,
+text:txt
+
+})
+
+}
+
+const msgQuery=query(collection(db,"messages"))
+
+onSnapshot(msgQuery,(snap)=>{
+
+let box=document.getElementById("messages")
+
+box.innerHTML=""
+
+snap.forEach((d)=>{
+
+let m=d.data()
+
+if((m.from==username&&m.to==activeUser)||(m.from==activeUser&&m.to==username)){
+
+box.innerHTML+=m.from+": "+m.text+"<br>"
+
+}
+
+})
+
+})
+
+document.getElementById("callBtn").onclick=async()=>{
+
+await addDoc(collection(db,"calls"),{
+
+caller:username,
+callee:activeUser,
+status:"calling"
+
+})
+
+}
+
+const callQuery=query(collection(db,"calls"),where("callee","==",username))
+
+onSnapshot(callQuery,(snap)=>{
+
+snap.forEach((d)=>{
+
+let data=d.data()
+
+if(data.status=="calling"){
+
+document.getElementById("incoming").style.display="block"
+
+document.getElementById("caller").innerText=data.caller
+
+}
+
+})
+
+})
+
 </script>
+
 </body>
 </html>
