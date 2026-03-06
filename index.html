@@ -1,94 +1,20 @@
 <!DOCTYPE html>
 <html>
 <head>
-<meta charset="UTF-8">
 <title>My Social</title>
 
 <style>
-
 body{
 font-family:sans-serif;
-margin:0;
 background:#f0f0f0;
-overflow-x:hidden;
-}
-
-#login{
-position:fixed;
-width:100%;
-height:100%;
-background:white;
-display:flex;
-justify-content:center;
-align-items:center;
-flex-direction:column;
-z-index:10;
-}
-
-#particles{
-position:fixed;
-top:0;
-left:0;
-width:100%;
-height:100%;
-pointer-events:none;
-}
-
-.dot{
-position:absolute;
-width:6px;
-height:6px;
-background:#bbb;
-border-radius:50%;
-animation:fly linear infinite;
-}
-
-@keyframes fly{
-from{
-transform:translateY(100vh);
-opacity:1;
-}
-to{
-transform:translateY(-10vh);
-opacity:0;
-}
-}
-
-.bubble{
-background:rgba(255,255,255,0.6);
-border:1px solid #ccc;
-border-radius:30px;
-padding:12px 20px;
-outline:none;
-width:250px;
-backdrop-filter:blur(6px);
-}
-
-button{
-border:none;
-border-radius:20px;
-padding:8px 20px;
-background:#444;
-color:white;
-cursor:pointer;
-}
-
-#error{
-color:red;
-}
-
-#top{
-background:white;
-padding:10px;
+text-align:center;
 }
 
 .post{
 background:white;
-margin:10px auto;
+margin:10px;
 padding:10px;
 border-radius:10px;
-max-width:400px;
-position:relative;
 }
 
 .avatar{
@@ -96,291 +22,203 @@ width:40px;
 height:40px;
 border-radius:50%;
 object-fit:cover;
+vertical-align:middle;
 }
 
-.postimg{
-max-width:100%;
-border-radius:10px;
-margin-top:5px;
+.reactions button{
+margin:5px;
 }
-
-.delete{
-position:absolute;
-top:5px;
-right:5px;
-border:none;
-background:red;
-color:white;
-border-radius:10px;
-}
-
-.dark{
-background:#111;
-color:white;
-}
-
-.dark .post{
-background:#1e1e1e;
-}
-
 </style>
+
 </head>
-
 <body>
-
-<div id="particles"></div>
 
 <div id="login">
 
-<h2>Enter Gmail</h2>
+<h2>Write your nickname</h2>
 
-<input id="email" class="bubble" placeholder="yourname@gmail.com">
+<input id="email" placeholder="Enter Gmail">
+<br><br>
+
+<button onclick="sendCode()">Send code</button>
+
+<div id="codeBox" style="display:none">
+
+<p id="showCode"></p>
+
+<input id="codeInput" placeholder="Enter code">
 
 <br><br>
 
-<button onclick="checkEmail()">Continue</button>
-
-<p id="error"></p>
-
-<div id="verify" style="display:none">
-
-<p>Enter verification code</p>
-
-<input id="code" class="bubble" placeholder="code">
+<input id="nick" placeholder="Nickname">
 
 <br><br>
 
-<button onclick="verify()">Verify</button>
+<input type="file" id="avatar">
+
+<br><br>
+
+<button onclick="login()">Login</button>
 
 </div>
-
-<br>
-
-<h3>Nickname</h3>
-
-<input id="nickname" class="bubble"><br><br>
-<input type="file" id="avatarInput">
 
 </div>
 
 <div id="app" style="display:none">
 
-<div id="top">
+<h2 id="myNick"></h2>
 
-<img id="myavatar" class="avatar">
-<b id="user"></b>
-
-<button onclick="theme()">🌙</button>
-
-</div>
-
-<br>
-
-<center>
-
-<input id="text" class="bubble" placeholder="Write post"><br><br>
-<input type="file" id="photo"><br><br>
+<input id="text" placeholder="Write post">
+<input type="file" id="photo">
 
 <button onclick="post()">Post</button>
-
-</center>
 
 <div id="posts"></div>
 
 </div>
 
-<script type="module">
+<script>
 
-import { initializeApp } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app.js";
-import { getFirestore, collection, addDoc, onSnapshot, updateDoc, doc, deleteDoc } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js";
+let code=""
+let userNick=""
+let userAvatar=""
+let postsToday=0
+let lastMessage=""
 
-const firebaseConfig = {
-apiKey: "AIzaSyAE46eiz4XltTwoPz4mVFG6kvPqAIhVf10",
-authDomain: "mysocial-dabdf.firebaseapp.com",
-projectId: "mysocial-dabdf",
-storageBucket: "mysocial-dabdf.firebasestorage.app",
-messagingSenderId: "812073291348",
-appId: "1:812073291348:web:e68dbf6c412c72de5aa7c1"
-};
-
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
-
-let username=""
-let avatar=""
-let verifyCode=""
-
-window.checkEmail=function(){
+function sendCode(){
 
 let email=document.getElementById("email").value
 
 if(!email.endsWith("@gmail.com")){
-
-document.getElementById("error").innerText="no working"
+alert("Only Gmail allowed")
 return
+}
+
+code=Math.floor(1000+Math.random()*9000)
+
+document.getElementById("showCode").innerText="Your code: "+code
+
+document.getElementById("codeBox").style.display="block"
 
 }
 
-verifyCode=Math.floor(1000+Math.random()*9000)
+function login(){
 
-document.getElementById("error").style.color="green"
-document.getElementById("error").innerText="Your code: "+verifyCode
+let input=document.getElementById("codeInput").value
 
-document.getElementById("verify").style.display="block"
-
+if(input!=code){
+alert("Wrong code")
+return
 }
 
-window.verify=function(){
+userNick=document.getElementById("nick").value
 
-let code=document.getElementById("code").value
+let file=document.getElementById("avatar").files[0]
 
-if(code==verifyCode){
+if(file){
 
-username=document.getElementById("nickname").value
-
-let file=document.getElementById("avatarInput").files[0]
 let reader=new FileReader()
 
-reader.onload=function(){
-
-avatar=reader.result
-
-document.getElementById("login").style.display="none"
-document.getElementById("app").style.display="block"
-
-document.getElementById("user").innerText=username
-document.getElementById("myavatar").src=avatar
-
+reader.onload=function(e){
+userAvatar=e.target.result
+startApp()
 }
 
 reader.readAsDataURL(file)
 
 }else{
-
-document.getElementById("error").innerText="wrong code"
-
+userAvatar=""
+startApp()
 }
 
 }
 
-window.post=async function(){
+function startApp(){
+
+document.getElementById("login").style.display="none"
+document.getElementById("app").style.display="block"
+
+document.getElementById("myNick").innerText="Hello "+userNick
+
+}
+
+function post(){
 
 let text=document.getElementById("text").value
+
+if(postsToday>=100){
+alert("Limit 100 posts per day")
+return
+}
+
+if(text==lastMessage){
+alert("Same message wait 1 minute")
+return
+}
+
+lastMessage=text
+postsToday++
+
+let div=document.createElement("div")
+div.className="post"
+
+let avatar=""
+
+if(userAvatar){
+avatar="<img class='avatar' src='"+userAvatar+"'> "
+}
+
 let photoFile=document.getElementById("photo").files[0]
 
-let photo=""
+let photoHTML=""
 
 if(photoFile){
 
 let reader=new FileReader()
 
-reader.onload=async function(){
+reader.onload=function(e){
 
-photo=reader.result
+photoHTML="<br><img src='"+e.target.result+"' width='200'>"
 
-await addDoc(collection(db,"posts"),{
-
-user:username,
-avatar:avatar,
-text:text,
-photo:photo,
-like:0
-
-})
+createPost()
 
 }
 
 reader.readAsDataURL(photoFile)
 
 }else{
-
-await addDoc(collection(db,"posts"),{
-
-user:username,
-avatar:avatar,
-text:text,
-photo:"",
-like:0
-
-})
-
+createPost()
 }
 
-}
-
-onSnapshot(collection(db,"posts"),(snapshot)=>{
-
-document.getElementById("posts").innerHTML=""
-
-snapshot.forEach((docSnap)=>{
-
-let data=docSnap.data()
-
-let div=document.createElement("div")
-div.className="post"
-
-let img=""
-
-if(data.photo){
-
-img="<img class='postimg' src='"+data.photo+"'>"
-
-}
-
-let del=""
-
-if(data.user==username){
-
-del="<button class='delete' onclick='delPost(\""+docSnap.id+"\")'>🗑</button>"
-
-}
+function createPost(){
 
 div.innerHTML=
-
-del+
-
-"<img class='avatar' src='"+data.avatar+"'> <b>"+data.user+"</b><br>"+
-
-data.text+"<br>"+img+
-
-"<br><button onclick='like(\""+docSnap.id+"\","+data.like+")'>👍 "+data.like+"</button>"
+avatar+"<b>"+userNick+"</b><br>"+text+photoHTML+
+"<div class='reactions'>"+
+"<button onclick='react(this)'>👍</button>"+
+"<button onclick='react(this)'>❤️</button>"+
+"<button onclick='react(this)'>😂</button>"+
+"</div>"
 
 document.getElementById("posts").prepend(div)
 
-})
-
-})
-
-window.like=async function(id,count){
-
-let ref=doc(db,"posts",id)
-
-await updateDoc(ref,{like:count+1})
+}
 
 }
 
-window.delPost=async function(id){
+function react(btn){
 
-await deleteDoc(doc(db,"posts",id))
+if(btn.classList.contains("used")) return
 
-}
+btn.classList.add("used")
 
-window.theme=function(){
+let count=btn.getAttribute("data-count")||0
 
-document.body.classList.toggle("dark")
+count++
 
-}
+btn.setAttribute("data-count",count)
 
-for(let i=0;i<40;i++){
-
-let dot=document.createElement("div")
-
-dot.className="dot"
-
-dot.style.left=Math.random()*100+"%"
-dot.style.animationDuration=(4+Math.random()*6)+"s"
-
-document.getElementById("particles").appendChild(dot)
+btn.innerText=btn.innerText+" "+count
 
 }
 
