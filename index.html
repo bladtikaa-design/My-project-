@@ -66,44 +66,30 @@ position:fixed;
 top:50%;
 left:50%;
 transform:translate(-50%,-50%);
-background:#222;
+background:white;
+padding:20px;
+border-radius:15px;
+display:none;
+}
+
+#callPopup{
+position:fixed;
+top:20px;
+left:50%;
+transform:translateX(-50%);
+background:#1e90ff;
 color:white;
 padding:15px;
 border-radius:10px;
 display:none;
-width:300px;
-}
-
-#messages{
-height:120px;
-overflow:auto;
-background:#111;
-padding:5px;
-border-radius:5px;
-}
-
-.status{
-font-size:12px;
 }
 
 .online{
-color:#00ff66;
+color:green;
 }
 
 .offline{
-color:#aaa;
-}
-
-#incoming{
-display:none;
-background:#333;
-padding:10px;
-border-radius:10px;
-}
-
-video{
-width:100%;
-border-radius:10px;
+color:gray;
 }
 
 </style>
@@ -144,47 +130,54 @@ border-radius:10px;
 
 </div>
 
+
 <div id="profile">
 
-<b id="pname"></b>
-<div id="pstatus" class="status"></div>
-
-<br>
-
-<button id="callBtn">📞 Call</button>
+<img id="pavatar" class="avatar"><br>
+<b id="pname"></b><br>
+<span id="status"></span>
 
 <br><br>
 
-<div id="messages"></div>
-
-<input id="msg" placeholder="message">
-<button id="send">Send</button>
+<button onclick="startChat()">Direct Messages</button>
+<button onclick="callUser()">📞 Call</button>
 
 <br><br>
-
-<div id="incoming">
-
-<b id="caller"></b> calling
-
-<br>
-
-<button id="accept">Accept</button>
-<button id="reject">Reject</button>
-
-</div>
-
-<video id="video" autoplay playsinline></video>
-
-<br>
 
 <button onclick="closeProfile()">Close</button>
 
 </div>
 
+
+<div id="callPopup">
+
+<b id="caller"></b> calling...
+
+<br><br>
+
+<button onclick="acceptCall()">Accept</button>
+<button onclick="declineCall()">Decline</button>
+
+</div>
+
+
+
 <script type="module">
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app.js";
-import { getFirestore, collection, addDoc, onSnapshot, updateDoc, doc, deleteDoc, setDoc, query, where } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js";
+
+import { 
+getFirestore,
+collection,
+addDoc,
+onSnapshot,
+updateDoc,
+doc,
+deleteDoc,
+setDoc,
+getDoc
+} from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js";
+
 
 const firebaseConfig = {
 apiKey: "AIzaSyAE46eiz4XltTwoPz4mVFG6kvPqAIhVf10",
@@ -198,18 +191,12 @@ appId: "1:812073291348:web:e68dbf6c412c72de5aa7c1"
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
+
+
 let username=localStorage.getItem("username")
 let avatar=localStorage.getItem("avatar")
 
-let activeUser=""
-
 if(username){
-
-afterLogin()
-
-}
-
-function afterLogin(){
 
 document.getElementById("login").style.display="none"
 document.getElementById("app").style.display="block"
@@ -217,7 +204,10 @@ document.getElementById("app").style.display="block"
 document.getElementById("user").innerText=username
 document.getElementById("myavatar").src=avatar
 
-setDoc(doc(db,"status",username),{online:true})
+setDoc(doc(db,"users",username),{
+avatar:avatar,
+online:true
+})
 
 }
 
@@ -236,7 +226,7 @@ avatar=reader.result
 localStorage.setItem("username",username)
 localStorage.setItem("avatar",avatar)
 
-afterLogin()
+location.reload()
 
 }
 
@@ -244,40 +234,90 @@ reader.readAsDataURL(file)
 
 }
 
+
+
 window.post=async function(){
 
 let text=document.getElementById("text").value
+let photoFile=document.getElementById("photo").files[0]
+let photo=""
+
+if(photoFile){
+
+let reader=new FileReader()
+
+reader.onload=async function(){
+
+photo=reader.result
 
 await addDoc(collection(db,"posts"),{
 
 user:username,
 avatar:avatar,
 text:text,
+photo:photo,
 like:0
 
 })
 
 }
 
-onSnapshot(collection(db,"posts"),(snap)=>{
+reader.readAsDataURL(photoFile)
+
+}else{
+
+await addDoc(collection(db,"posts"),{
+
+user:username,
+avatar:avatar,
+text:text,
+photo:"",
+like:0
+
+})
+
+}
+
+}
+
+
+
+onSnapshot(collection(db,"posts"),(snapshot)=>{
 
 document.getElementById("posts").innerHTML=""
 
-snap.forEach((docSnap)=>{
+snapshot.forEach((docSnap)=>{
 
-let d=docSnap.data()
+let data=docSnap.data()
 
 let div=document.createElement("div")
-
 div.className="post"
+
+let img=""
+
+if(data.photo){
+
+img="<img class='postimg' src='"+data.photo+"'>"
+
+}
+
+let del=""
+
+if(data.user==username){
+
+del="<button class='delete' onclick='delPost(\""+docSnap.id+"\")'>🗑</button>"
+
+}
 
 div.innerHTML=
 
-"<img class='avatar' src='"+d.avatar+"' onclick='openProfile(\""+d.user+"\")'> <b onclick='openProfile(\""+d.user+"\")'>"+d.user+"</b><br>"+
+del+
 
-d.text+
+"<img class='avatar' onclick='openProfile(\""+data.user+"\",\""+data.avatar+"\")' src='"+data.avatar+"'> <b>"+data.user+"</b><br>"+
 
-"<br><button onclick='like(\""+docSnap.id+"\","+d.like+")'>👍 "+d.like+"</button>"
+data.text+"<br>"+img+
+
+"<br><button onclick='like(\""+docSnap.id+"\","+data.like+")'>👍 "+data.like+"</button>"
 
 document.getElementById("posts").prepend(div)
 
@@ -285,41 +325,66 @@ document.getElementById("posts").prepend(div)
 
 })
 
+
+
 window.like=async function(id,count){
 
-await updateDoc(doc(db,"posts",id),{like:count+1})
+let ref=doc(db,"posts",id)
+
+await updateDoc(ref,{like:count+1})
 
 }
 
-window.openProfile=function(user){
 
-activeUser=user
+
+window.delPost=async function(id){
+
+await deleteDoc(doc(db,"posts",id))
+
+}
+
+
+
+window.theme=function(){
+
+document.body.classList.toggle("dark")
+
+}
+
+
+
+let selectedUser=""
+
+
+
+window.openProfile=async function(user,av){
+
+selectedUser=user
 
 document.getElementById("profile").style.display="block"
 
 document.getElementById("pname").innerText=user
+document.getElementById("pavatar").src=av
 
-const q=query(collection(db,"status"),where("__name__","==",user))
+let snap=await getDoc(doc(db,"users",user))
 
-onSnapshot(q,(snap)=>{
+if(snap.exists()){
 
-snap.forEach((d)=>{
+if(snap.data().online){
 
-if(d.data().online){
-
-document.getElementById("pstatus").innerHTML="🟢 online"
+document.getElementById("status").innerHTML="<span class='online'>● online</span>"
 
 }else{
 
-document.getElementById("pstatus").innerHTML="⚪ offline"
+document.getElementById("status").innerHTML="<span class='offline'>● offline</span>"
 
 }
 
-})
-
-})
+}
 
 }
+
+
 
 window.closeProfile=function(){
 
@@ -327,69 +392,70 @@ document.getElementById("profile").style.display="none"
 
 }
 
-document.getElementById("send").onclick=async()=>{
 
-let txt=document.getElementById("msg").value
 
-await addDoc(collection(db,"messages"),{
+window.callUser=async function(){
 
-from:username,
-to:activeUser,
-text:txt
+await setDoc(doc(db,"calls",selectedUser),{
+
+from:username
 
 })
 
 }
 
-const msgQuery=query(collection(db,"messages"))
 
-onSnapshot(msgQuery,(snap)=>{
 
-let box=document.getElementById("messages")
+onSnapshot(doc(db,"calls",username),(snap)=>{
 
-box.innerHTML=""
+if(snap.exists()){
 
-snap.forEach((d)=>{
+document.getElementById("callPopup").style.display="block"
 
-let m=d.data()
-
-if((m.from==username&&m.to==activeUser)||(m.from==activeUser&&m.to==username)){
-
-box.innerHTML+=m.from+": "+m.text+"<br>"
+document.getElementById("caller").innerText=snap.data().from
 
 }
 
 })
 
-})
 
-document.getElementById("callBtn").onclick=async()=>{
 
-await addDoc(collection(db,"calls"),{
+window.acceptCall=function(){
 
-caller:username,
-callee:activeUser,
-status:"calling"
+alert("Call started")
 
-})
+document.getElementById("callPopup").style.display="none"
+
+deleteDoc(doc(db,"calls",username))
 
 }
 
-const callQuery=query(collection(db,"calls"),where("callee","==",username))
 
-onSnapshot(callQuery,(snap)=>{
 
-snap.forEach((d)=>{
+window.declineCall=function(){
 
-let data=d.data()
+document.getElementById("callPopup").style.display="none"
 
-if(data.status=="calling"){
-
-document.getElementById("incoming").style.display="block"
-
-document.getElementById("caller").innerText=data.caller
+deleteDoc(doc(db,"calls",username))
 
 }
+
+
+
+window.startChat=function(){
+
+alert("DM coming soon")
+
+}
+
+
+
+window.addEventListener("beforeunload",()=>{
+
+setDoc(doc(db,"users",username),{
+
+avatar:avatar,
+online:false
 
 })
 
