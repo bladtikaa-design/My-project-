@@ -18,6 +18,10 @@ body{font-family:sans-serif;background:#f0f0f0;text-align:center;margin:0;}
 #incomingCall{display:none;background:#333;color:white;padding:10px;border-radius:10px;margin-bottom:5px;}
 #callUserBtn{padding:5px 8px;border:none;background:blue;color:white;border-radius:5px;cursor:pointer;margin-bottom:5px;}
 </style>
+
+<!-- Подключение Google reCAPTCHA -->
+<script src="https://www.google.com/recaptcha/api.js" async defer></script>
+
 </head>
 <body>
 
@@ -25,6 +29,10 @@ body{font-family:sans-serif;background:#f0f0f0;text-align:center;margin:0;}
 <h2>Nickname</h2>
 <input id="nickname"><br><br>
 <input type="file" id="avatarInput"><br><br>
+
+<!-- Капча -->
+<div class="g-recaptcha" data-sitekey="ВАШ_SITE_KEY"></div><br>
+
 <button onclick="login()">Enter</button>
 </div>
 
@@ -97,16 +105,24 @@ document.getElementById("closeProfile").onclick = ()=>{
 
 // ---------------- Login ----------------
 window.login=function(){
+    // Проверка капчи
+    const response = grecaptcha.getResponse();
+    if(response.length === 0){
+        return alert("Пожалуйста, подтвердите, что вы не робот!");
+    }
+
     username=document.getElementById("nickname").value;
     if(!username) return alert("Введите ник!");
     let file=document.getElementById("avatarInput").files[0];
     if(!file) return alert("Выберите аватар!");
+
     let reader=new FileReader();
     reader.onload=function(){ 
         avatar=reader.result; 
         localStorage.setItem("username",username); 
         localStorage.setItem("avatar",avatar); 
         afterLogin();
+        grecaptcha.reset(); // сброс капчи после успешного логина
     }
     reader.readAsDataURL(file);
 }
