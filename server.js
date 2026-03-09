@@ -8,10 +8,10 @@ app.use(cors());
 app.use(express.json());
 app.use(express.static("public"));
 
-// ✅ Твой секретный OpenAI ключ
+// ✅ Твой OpenAI ключ (только здесь!)
 const OPENAI_KEY = "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";
 
-let memory = {}; // Память диалогов по пользователям (по никнейму)
+let memory = {}; // память диалогов по никнейму
 
 app.post("/ai", async (req, res) => {
   const { username, message } = req.body;
@@ -37,6 +37,7 @@ app.post("/ai", async (req, res) => {
     const reply = data.choices[0].message.content;
 
     memory[username].push({ role: "assistant", content: reply });
+
     res.json({ reply });
   } catch (err) {
     console.error(err);
@@ -44,6 +45,7 @@ app.post("/ai", async (req, res) => {
   }
 });
 
-app.listen(3000, () => {
+// Запуск сервера на всех интерфейсах для сети
+app.listen(3000, "0.0.0.0", () => {
   console.log("AI сервер запущен на порту 3000");
 });
