@@ -67,9 +67,6 @@ loadPosts();
 function theme(){ document.body.classList.toggle("dark"); }
 
 // ======== AI ========
-let aiMemory = [];
-let OPENAI_KEY = "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"; // твой ключ
-
 function openAI(){ document.getElementById("aiChat").style.display="block"; }
 function closeAI(){ document.getElementById("aiChat").style.display="none"; }
 
@@ -86,24 +83,15 @@ async function sendAI(){
   if(!text) return;
   addAI(text, "user");
   document.getElementById("aiInput").value = "";
-  aiMemory.push({ role:"user", content: text });
 
   try{
-    const res = await fetch("https://api.openai.com/v1/chat/completions", {
+    const res = await fetch("http://localhost:3000/ai", {
       method: "POST",
-      headers: {
-        "Authorization": `Bearer ${OPENAI_KEY}`,
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({
-        model: "gpt-4.1-mini",
-        messages: aiMemory
-      })
+      headers: { "Content-Type":"application/json" },
+      body: JSON.stringify({ username, message:text })
     });
     const data = await res.json();
-    const reply = data.choices[0].message.content;
-    aiMemory.push({ role:"assistant", content: reply });
-    addAI(reply, "bot");
+    addAI(data.reply, "bot");
   }catch(err){
     addAI("Ошибка соединения с AI", "bot");
   }
