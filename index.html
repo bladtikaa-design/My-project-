@@ -38,11 +38,12 @@ body{font-family:sans-serif;background:#f0f0f0;text-align:center;margin:0;}
 </div>
 
 <script>
-let aiMemory=[];
+let username = prompt("Введите никнейм для AI и постов:") || "Guest";
 
-// ---------------- POSTS ----------------
+// Тема
 function theme(){document.body.classList.toggle("dark")}
 
+// Посты
 function addPost(){
     let text=document.getElementById("postText").value;
     if(!text) return;
@@ -53,7 +54,7 @@ function addPost(){
     document.getElementById("postText").value="";
 }
 
-// ---------------- AI ----------------
+// AI чат
 function openAI(){document.getElementById("aiChat").style.display="block"}
 function closeAI(){document.getElementById("aiChat").style.display="none"}
 
@@ -65,30 +66,23 @@ function addAI(text,side){
     box.scrollTop=box.scrollHeight;
 }
 
-function sendAI(){
+async function sendAI(){
     let text=document.getElementById("aiInput").value;
     if(!text) return;
     addAI(text,"user");
-    aiMemory.push(text);
-
-    let reply="";
-
-    // Простая логика AI
-    if(text.toLowerCase().includes("привет") || text.toLowerCase().includes("hello")){
-        reply="Привет 👋 / Hello!";
-    }
-    else if(text.match(/[0-9]+\s*[\+\-\*\/]\s*[0-9]+/)){
-        try{reply="Ответ: "+eval(text);}catch{reply="Ошибка в примере";}
-    }
-    else if(text.toLowerCase().includes("что я писал")){
-        reply="Ты писал: "+aiMemory.slice(-3).join(", ");
-    }
-    else{
-        reply="Я AI бот 🤖\nПопробуй:\nпривет\n2+2\n5*9\nчто я писал";
-    }
-
-    setTimeout(()=>{addAI(reply,"bot")},300);
     document.getElementById("aiInput").value="";
+
+    try{
+        const res = await fetch("/ai",{
+            method:"POST",
+            headers:{"Content-Type":"application/json"},
+            body:JSON.stringify({ username, message: text })
+        });
+        const data = await res.json();
+        addAI(data.reply,"bot");
+    }catch(err){
+        addAI("Ошибка соединения с AI","bot");
+    }
 }
 </script>
 </body>
