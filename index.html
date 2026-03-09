@@ -2,214 +2,94 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>My Social</title>
-
+<title>My Social + AI</title>
 <style>
-
-body{
-font-family:sans-serif;
-background:#f0f0f0;
-margin:0;
-text-align:center;
-}
-
-#top{
-background:white;
-padding:10px;
-}
-
-.post{
-background:white;
-margin:10px auto;
-padding:10px;
-border-radius:10px;
-max-width:400px;
-}
-
-.avatar{
-width:40px;
-height:40px;
-border-radius:50%;
-object-fit:cover;
-}
-
-.dark{
-background:#111;
-color:white;
-}
-
-.dark .post{
-background:#1e1e1e;
-}
-
-#aiChat{
-display:none;
-position:fixed;
-bottom:20px;
-right:20px;
-width:320px;
-background:#222;
-color:white;
-border-radius:10px;
-padding:10px;
-}
-
-#aiMessages{
-height:200px;
-overflow-y:auto;
-background:#111;
-padding:5px;
-margin:5px 0;
-border-radius:5px;
-}
-
+body{font-family:sans-serif;background:#f0f0f0;text-align:center;margin:0;}
+#top{background:white;padding:10px;}
+.post{background:white;margin:10px auto;padding:10px;border-radius:10px;max-width:400px;position:relative;}
+.avatar{width:40px;height:40px;border-radius:50%;object-fit:cover;cursor:pointer;}
+.postimg{max-width:100%;border-radius:10px;margin-top:5px;}
+.delete{position:absolute;top:5px;right:5px;border:none;background:red;color:white;border-radius:10px;cursor:pointer;}
+.dark{background:#111;color:white;}
+.dark .post{background:#1e1e1e;}
+#aiChat{display:none;position:fixed;bottom:20px;right:20px;width:320px;background:#222;color:white;border-radius:10px;padding:10px;z-index:5000;}
+#aiMessages{height:200px;overflow-y:auto;background:#111;padding:5px;margin:5px 0;border-radius:5px;}
 </style>
 </head>
-
 <body>
 
 <div id="top">
-
 <b>My Social</b>
-
 <button onclick="theme()">🌙</button>
-
-<button onclick="openAI()">🤖</button>
-
+<button onclick="openAI()">🤖 AI</button>
 </div>
-
 
 <h3>Posts</h3>
-
-<input id="postText" placeholder="Write post">
-<button onclick="addPost()">Post</button>
-
+<input id="postText" placeholder="Write post"><button onclick="addPost()">Post</button>
 <div id="posts"></div>
 
-
-<!-- AI CHAT -->
-
+<!-- AI Chat -->
 <div id="aiChat">
-
 <b>🤖 AI Bot</b>
-
 <div id="aiMessages"></div>
-
 <input id="aiInput" placeholder="Message">
-
 <button onclick="sendAI()">Send</button>
-
 <button onclick="closeAI()">✖</button>
-
 </div>
 
-
 <script>
+let aiMemory=[];
 
-let aiMemory=[]
-
-function theme(){
-document.body.classList.toggle("dark")
-}
+// ---------------- POSTS ----------------
+function theme(){document.body.classList.toggle("dark")}
 
 function addPost(){
-
-let text=document.getElementById("postText").value
-
-if(!text) return
-
-let div=document.createElement("div")
-
-div.className="post"
-
-div.innerText=text
-
-document.getElementById("posts").prepend(div)
-
-document.getElementById("postText").value=""
-
+    let text=document.getElementById("postText").value;
+    if(!text) return;
+    let div=document.createElement("div");
+    div.className="post";
+    div.innerText=text;
+    document.getElementById("posts").prepend(div);
+    document.getElementById("postText").value="";
 }
 
-
-// AI
-
-function openAI(){
-document.getElementById("aiChat").style.display="block"
-}
-
-function closeAI(){
-document.getElementById("aiChat").style.display="none"
-}
+// ---------------- AI ----------------
+function openAI(){document.getElementById("aiChat").style.display="block"}
+function closeAI(){document.getElementById("aiChat").style.display="none"}
 
 function addAI(text,side){
-
-let box=document.getElementById("aiMessages")
-
-let align=side==="user"?"right":"left"
-
-let color=side==="user"?"#333":"#444"
-
-box.innerHTML+=`<div style="text-align:${align};background:${color};margin:3px;padding:5px;border-radius:5px;">${text}</div>`
-
-box.scrollTop=box.scrollHeight
-
+    let box=document.getElementById("aiMessages");
+    let align=side==="user"?"right":"left";
+    let color=side==="user"?"#333":"#444";
+    box.innerHTML+=`<div style="text-align:${align};background:${color};margin:3px;padding:5px;border-radius:5px;">${text}</div>`;
+    box.scrollTop=box.scrollHeight;
 }
 
 function sendAI(){
+    let text=document.getElementById("aiInput").value;
+    if(!text) return;
+    addAI(text,"user");
+    aiMemory.push(text);
 
-let text=document.getElementById("aiInput").value
+    let reply="";
 
-if(!text) return
+    // Простая логика AI
+    if(text.toLowerCase().includes("привет") || text.toLowerCase().includes("hello")){
+        reply="Привет 👋 / Hello!";
+    }
+    else if(text.match(/[0-9]+\s*[\+\-\*\/]\s*[0-9]+/)){
+        try{reply="Ответ: "+eval(text);}catch{reply="Ошибка в примере";}
+    }
+    else if(text.toLowerCase().includes("что я писал")){
+        reply="Ты писал: "+aiMemory.slice(-3).join(", ");
+    }
+    else{
+        reply="Я AI бот 🤖\nПопробуй:\nпривет\n2+2\n5*9\nчто я писал";
+    }
 
-addAI(text,"user")
-
-aiMemory.push(text)
-
-let reply=""
-
-if(text.toLowerCase().includes("привет") || text.toLowerCase().includes("hello")){
-reply="Привет 👋 Hello!"
+    setTimeout(()=>{addAI(reply,"bot")},300);
+    document.getElementById("aiInput").value="";
 }
-
-else if(text.match(/[0-9]+\s*[\+\-\*\/]\s*[0-9]+/)){
-
-try{
-reply="Ответ: "+eval(text)
-}catch{
-reply="Ошибка в примере"
-}
-
-}
-
-else if(text.toLowerCase().startsWith("найди")){
-
-let q=text.replace("найди","")
-
-reply="Поиск: https://www.google.com/search?q="+encodeURIComponent(q)
-
-}
-
-else if(text.toLowerCase().includes("что я писал")){
-
-reply="Ты писал: "+aiMemory.slice(-3).join(", ")
-
-}
-
-else{
-
-reply="Я AI бот 🤖 Попробуй:\n\nпривет\n2+2\nнайди роблокс"
-
-}
-
-setTimeout(()=>{
-addAI(reply,"bot")
-},500)
-
-document.getElementById("aiInput").value=""
-
-}
-
 </script>
-
 </body>
 </html>
