@@ -4,7 +4,16 @@
 <meta charset="UTF-8">
 <title>My Social</title>
 <style>
-body{font-family:sans-serif;background:#f0f0f0;text-align:center;margin:0;}
+
+<div id="aiMessages" style="height:200px;overflow-y:auto;background:#111;padding:5px;border-radius:5px;margin:5px 0;"></div>
+
+<input id="aiInput" placeholder="Написать..." style="width:60%">
+<input type="file" id="aiPhoto">
+<button onclick="sendAI()">➤</button>
+<button onclick="closeAI()">✖</button>
+
+</div>
+   body{font-family:sans-serif;background:#f0f0f0;text-align:center;margin:0;}
 #top{background:white;padding:10px;}
 .post{background:white;margin:10px auto;padding:10px;border-radius:10px;max-width:400px;position:relative;}
 .avatar{width:40px;height:40px;border-radius:50%;object-fit:cover;cursor:pointer;}
@@ -18,7 +27,9 @@ body{font-family:sans-serif;background:#f0f0f0;text-align:center;margin:0;}
 #incomingCall{display:none;background:#333;color:white;padding:10px;border-radius:10px;margin-bottom:5px;}
 #callUserBtn{padding:5px 8px;border:none;background:blue;color:white;border-radius:5px;cursor:pointer;margin-bottom:5px;}
 </style>
-</head>
+</head> <div id="aiChat" style="display:none;position:fixed;bottom:20px;right:20px;width:320px;background:#222;color:white;border-radius:10px;padding:10px;z-index:2000;">
+
+<b>🤖 AI Chat</b> 
 <body>
 
 <div id="login">
@@ -33,6 +44,7 @@ body{font-family:sans-serif;background:#f0f0f0;text-align:center;margin:0;}
 <img id="myavatar" class="avatar">
 <b id="user"></b>
 <button onclick="theme()">🌙</button>
+<button onclick="openAI()">🤖</button>
 </div>
 <br>
 <input id="text" placeholder="Write post"><br><br>
@@ -263,5 +275,95 @@ onSnapshot(collection(db,"calls"), snapshot=>{
     });
 });
 </script>
+    // ---------------- AI CHAT ----------------
+
+let aiMemory=[];
+
+function openAI(){
+document.getElementById("aiChat").style.display="block";
+}
+
+function closeAI(){
+document.getElementById("aiChat").style.display="none";
+}
+
+function addAI(text,side){
+
+let box=document.getElementById("aiMessages");
+
+let align=side==="user"?"right":"left";
+let color=side==="user"?"#333":"#444";
+
+box.innerHTML+=`
+<div style="text-align:${align};background:${color};margin:3px;padding:5px;border-radius:5px;">
+${text}
+</div>
+`;
+
+box.scrollTop=box.scrollHeight;
+}
+
+function sendAI(){
+
+let text=document.getElementById("aiInput").value;
+let photo=document.getElementById("aiPhoto").files[0];
+
+if(!text && !photo) return;
+
+addAI(text,"user");
+
+aiMemory.push(text);
+
+let reply="";
+
+if(text.toLowerCase().includes("привет") || text.toLowerCase().includes("hello")){
+reply="Привет 👋 / Hello!";
+}
+
+else if(text.match(/[0-9]+\s*[\+\-\*\/]\s*[0-9]+/)){
+try{
+reply="Ответ: "+eval(text);
+}catch{
+reply="Не понял пример";
+}
+}
+
+else if(text.toLowerCase().startsWith("найди")){
+let q=text.replace("найди","");
+reply=`Поиск 🔎 https://www.google.com/search?q=${encodeURIComponent(q)}`;
+}
+
+else if(text.toLowerCase().includes("что я писал")){
+reply="Ты писал: "+aiMemory.slice(-3).join(", ");
+}
+
+else if(photo){
+
+let reader=new FileReader();
+
+reader.onload=function(){
+
+addAI("<img src='"+reader.result+"' style='max-width:100%'>","user");
+
+addAI("Интересное фото 📷","bot");
+
+}
+
+reader.readAsDataURL(photo);
+
+document.getElementById("aiInput").value="";
+return;
+}
+
+else{
+reply="Я AI бот 🤖 Попробуй написать:\nпривет\n2+2\nнайди роблокс";
+}
+
+setTimeout(()=>{
+addAI(reply,"bot");
+},500);
+
+document.getElementById("aiInput").value="";
+}
 </body>
 </html>
