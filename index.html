@@ -17,11 +17,38 @@ body{font-family:sans-serif;background:#f0f0f0;text-align:center;margin:0;}
 #callVideo{display:none;width:100%;margin-top:5px;border-radius:10px;}
 #incomingCall{display:none;background:#333;color:white;padding:10px;border-radius:10px;margin-bottom:5px;}
 #callUserBtn{padding:5px 8px;border:none;background:blue;color:white;border-radius:5px;cursor:pointer;margin-bottom:5px;}
+
+/* ---------------- Drawing Panel ---------------- */
+#drawingPanel{
+  position:fixed; bottom:90px; right:10px; width:420px; background:#ccc; padding:10px; border-radius:10px; z-index:1001;
+  box-shadow:0 0 5px rgba(0,0,0,0.3);
+}
+#drawingCanvas{border:1px solid #999; border-radius:10px; touch-action:none;}
+#palette{margin-top:5px;}
+.colorBtn{width:25px; height:25px; display:inline-block; margin:2px; border-radius:5px; cursor:pointer; border:1px solid #333;}
+#fillBtn, #clearBtn, #postDrawBtn{padding:5px 8px; margin:3px; border:none; border-radius:5px; cursor:pointer;}
+#drawHeader{font-weight:bold;margin-bottom:5px;color:#333;}
+
+/* ---------------- Liquid Glass Button ---------------- */
+.liquidGlass {
+  position: fixed;
+  bottom:20px; left:50%; transform:translateX(-50%);
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 30px; padding: 15px 50px;
+  color: #fff; font-weight: bold; text-align: center; font-family: sans-serif;
+  box-shadow: 0 8px 32px 0 rgba(0,0,0,0.2), 0 0 1px 1px rgba(255,255,255,0.3) inset;
+  backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255,255,255,0.3); cursor: default; z-index: 1000;
+  transition: 0.3s;
+}
+.liquidGlass:hover {
+  background: rgba(255, 255, 255, 0.3);
+  box-shadow: 0 12px 40px 0 rgba(0,0,0,0.25), 0 0 2px 2px rgba(255,255,255,0.4) inset;
+}
 </style>
 
 <!-- Подключение Google reCAPTCHA -->
 <script src="https://www.google.com/recaptcha/api.js" async defer></script>
-
 </head>
 <body>
 
@@ -29,10 +56,7 @@ body{font-family:sans-serif;background:#f0f0f0;text-align:center;margin:0;}
 <h2>Nickname</h2>
 <input id="nickname"><br><br>
 <input type="file" id="avatarInput"><br><br>
-
-<!-- Капча -->
 <div class="g-recaptcha" data-sitekey="6LfBxYQsAAAAAEdWSoTfDLNQw5VqQcexGKbzuDY3"></div><br>
-
 <button onclick="login()">Enter</button>
 </div>
 
@@ -65,6 +89,28 @@ body{font-family:sans-serif;background:#f0f0f0;text-align:center;margin:0;}
 </div>
 
 <audio id="ringtone" src="https://actions.google.com/sounds/v1/alarms/alarm_clock.ogg" preload="auto"></audio>
+
+<!-- ---------------- Drawing Panel ---------------- -->
+<div id="drawingPanel">
+  <div id="drawHeader">BLADTIK DRAW</div>
+  <canvas id="drawingCanvas" width="400" height="300"></canvas><br>
+  <div id="palette">
+    <div class="colorBtn" style="background:black;" data-color="#000"></div>
+    <div class="colorBtn" style="background:red;" data-color="red"></div>
+    <div class="colorBtn" style="background:blue;" data-color="blue"></div>
+    <div class="colorBtn" style="background:green;" data-color="green"></div>
+    <div class="colorBtn" style="background:yellow;" data-color="yellow"></div>
+    <div class="colorBtn" style="background:white;" data-color="white"></div>
+  </div>
+  <button id="fillBtn">Fill</button>
+  <button id="clearBtn">Clear</button>
+  <button id="postDrawBtn">Post Drawing</button>
+</div>
+
+<!-- ---------------- Liquid Glass Button ---------------- -->
+<div class="liquidGlass">
+  BLADTIK BUTTON
+</div>
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app.js";
@@ -105,24 +151,21 @@ document.getElementById("closeProfile").onclick = ()=>{
 
 // ---------------- Login ----------------
 window.login=function(){
-    // Проверка капчи
     const response = grecaptcha.getResponse();
     if(response.length === 0){
         return alert("Пожалуйста, подтвердите, что вы не робот!");
     }
-
     username=document.getElementById("nickname").value;
     if(!username) return alert("Введите ник!");
     let file=document.getElementById("avatarInput").files[0];
     if(!file) return alert("Выберите аватар!");
-
     let reader=new FileReader();
     reader.onload=function(){ 
         avatar=reader.result; 
         localStorage.setItem("username",username); 
         localStorage.setItem("avatar",avatar); 
         afterLogin();
-        grecaptcha.reset(); // сброс капчи после успешного логина
+        grecaptcha.reset();
     }
     reader.readAsDataURL(file);
 }
@@ -138,13 +181,6 @@ function afterLogin(){
     }
     startRealtime();
     startCamera();
-}
-
-// ---------------- Check existing user ----------------
-if(username && avatar){
-    afterLogin();
-} else {
-    document.getElementById("login").style.display="block";
 }
 
 // ---------------- Posts ----------------
@@ -179,7 +215,6 @@ function startRealtime(){
         })
     });
 
-    // Messages listener
     onSnapshot(collection(db,"messages"), snapshot=>{
         snapshot.docChanges().forEach(change=>{
             const data = change.doc.data();
@@ -227,57 +262,62 @@ async function endCall(){
     document.getElementById("callVideo").style.display="none";
 }
 
-// ---------------- Make call ----------------
-document.getElementById("callUserBtn").addEventListener("click", async ()=>{
-    if(!activeProfile) return;
-    const callDocRef = doc(collection(db,"calls"));
-    currentCallDoc = callDocRef;
+// ---------------- Drawing ----------------
+const canvas = document.getElementById("drawingCanvas");
+const ctx = canvas.getContext("2d");
+const palette = document.querySelectorAll(".colorBtn");
+const fillBtn = document.getElementById("fillBtn");
+const clearBtn = document.getElementById("clearBtn");
+const postDrawBtn = document.getElementById("postDrawBtn");
 
-    peerConnection = new RTCPeerConnection(servers);
-    localStream.getTracks().forEach(track=>peerConnection.addTrack(track,localStream));
-    peerConnection.ontrack = e=>{
-        document.getElementById("callVideo").style.display="block";
-        document.getElementById("callVideo").srcObject = e.streams[0];
-    };
-    peerConnection.onicecandidate = event=>{
-        if(event.candidate) setDoc(callDocRef,{ice:[event.candidate]},{merge:true});
-    }
+let drawing=false, lastX=0, lastY=0;
+let currentColor="#000";
 
-    const offer = await peerConnection.createOffer();
-    await peerConnection.setLocalDescription(offer);
-    await setDoc(callDocRef,{caller:username,callee:activeProfile,offer:offer.toJSON(),status:"calling"},{merge:true});
+palette.forEach(btn=>{
+    btn.onclick=()=> currentColor=btn.dataset.color;
 });
 
-// ---------------- Incoming calls ----------------
-onSnapshot(collection(db,"calls"), snapshot=>{
-    snapshot.docChanges().forEach(async change=>{
-        const data = change.doc.data();
-        if(data.callee===username && change.type==="added" && data.status==="calling"){
-            openProfile(data.caller);
-            document.getElementById("incomingCall").style.display="block";
-            document.getElementById("callerName").innerText=data.caller;
-            document.getElementById("ringtone").play();
+fillBtn.onclick=()=> ctx.fillRect(0,0,canvas.width,canvas.height);
+clearBtn.onclick=()=> ctx.clearRect(0,0,canvas.width,canvas.height);
 
-            document.getElementById("acceptCallBtn").onclick=async()=>{
-                document.getElementById("incomingCall").style.display="none";
-                document.getElementById("callVideo").style.display="block";
+function startDraw(e){
+    drawing=true;
+    let rect=canvas.getBoundingClientRect();
+    if(e.touches) { lastX=e.touches[0].clientX-rect.left; lastY=e.touches[0].clientY-rect.top; }
+    else { lastX=e.offsetX; lastY=e.offsetY; }
+}
+function drawMove(e){
+    if(!drawing) return;
+    let rect=canvas.getBoundingClientRect();
+    let x=0,y=0;
+    if(e.touches) { x=e.touches[0].clientX-rect.left; y=e.touches[0].clientY-rect.top; }
+    else { x=e.offsetX; y=e.offsetY; }
+    ctx.strokeStyle=currentColor;
+    ctx.lineWidth=2;
+    ctx.lineCap="round";
+    ctx.beginPath();
+    ctx.moveTo(lastX,lastY);
+    ctx.lineTo(x,y);
+    ctx.stroke();
+    lastX=x; lastY=y;
+    e.preventDefault();
+}
+function endDraw(){drawing=false;}
+canvas.addEventListener("mousedown",startDraw);
+canvas.addEventListener("mousemove",drawMove);
+canvas.addEventListener("mouseup",endDraw);
+canvas.addEventListener("mouseout",endDraw);
+canvas.addEventListener("touchstart",startDraw);
+canvas.addEventListener("touchmove",drawMove);
+canvas.addEventListener("touchend",endDraw);
 
-                peerConnection = new RTCPeerConnection(servers);
-                localStream.getTracks().forEach(track=>peerConnection.addTrack(track,localStream));
-                await peerConnection.setRemoteDescription(new RTCSessionDescription(data.offer));
-                const answer = await peerConnection.createAnswer();
-                await peerConnection.setLocalDescription(answer);
-                await setDoc(change.doc.ref,{answer:answer.toJSON(),status:"accepted"},{merge:true});
-                peerConnection.ontrack=e=>{document.getElementById("callVideo").srcObject=e.streams[0];};
-            };
-
-            document.getElementById("rejectCallBtn").onclick=()=>{
-                document.getElementById("incomingCall").style.display="none";
-                endCall();
-            }
-        }
-    });
-});
+postDrawBtn.onclick = async()=>{
+    const text = document.getElementById("text").value || "";
+    const dataURL = canvas.toDataURL("image/png");
+    await addDoc(collection(db,"posts"),{user:username,avatar:avatar,text:text,photo:dataURL,like:0});
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    document.getElementById("text").value="";
+};
 </script>
 </body>
 </html>
