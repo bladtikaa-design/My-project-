@@ -115,7 +115,7 @@ body{font-family:sans-serif;background:#f0f0f0;text-align:center;margin:0;}
   justify-content:center;
   width:18px;
   height:18px;
-  background:#1DA1F2;
+  background:#1DA1F2; /* синий ромб */
   color:white;
   font-size:12px;
   font-weight:bold;
@@ -124,23 +124,25 @@ body{font-family:sans-serif;background:#f0f0f0;text-align:center;margin:0;}
 }
 </style>
 
+<!-- Google reCAPTCHA -->
 <script src="https://www.google.com/recaptcha/api.js" async defer></script>
 
 </head>
 <body>
 
-<div id="animatedText">BLADTIK SITE 🫵</div>
+<!-- ---------------- GREEN TEXT ---------------- -->
+<div id="animatedText">BLADTIK SITE</div>
 
-<!-- LOGIN -->
+<!-- ---------------- LOGIN ---------------- -->
 <div id="login">
 <h2>Nickname</h2>
 <input id="nickname"><br><br>
 <input type="file" id="avatarInput"><br><br>
-<div class="g-recaptcha" data-sitekey="6LfBxYQsAAAAAEdWSoTfDLNQw5VFG6kvPqAIhVf10"></div><br>
+<div class="g-recaptcha" data-sitekey="6LfBxYQsAAAAAEdWSoTfDLNQw5VqQcexGKbzuDY3"></div><br>
 <button onclick="login()">Enter</button>
 </div>
 
-<!-- APP -->
+<!-- ---------------- APP ---------------- -->
 <div id="app" style="display:none">
 <div id="top">
 <img id="myavatar" class="avatar">
@@ -154,7 +156,7 @@ body{font-family:sans-serif;background:#f0f0f0;text-align:center;margin:0;}
 <div id="posts"></div>
 </div>
 
-<!-- PROFILE -->
+<!-- ---------------- PROFILE MENU ---------------- -->
 <div id="profileDiv">
 <b id="profileNick"></b><br>
 Subscribers: <span id="subCount">0</span><br>
@@ -171,6 +173,7 @@ Subscribers: <span id="subCount">0</span><br>
 <button id="closeProfile">Close</button>
 </div>
 
+<!-- ---------------- PROFILE BUTTON ---------------- -->
 <div id="profileButton">
   <img id="profileBtnImg" src="">
   <span>My Profile</span>
@@ -180,7 +183,7 @@ Subscribers: <span id="subCount">0</span><br>
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app.js";
-import { getFirestore, collection, addDoc, onSnapshot, updateDoc, doc, deleteDoc, getDocs } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js";
+import { getFirestore, collection, addDoc, onSnapshot, updateDoc, doc, deleteDoc, setDoc, getDocs } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js";
 
 const firebaseConfig = {
 apiKey:"AIzaSyAE46eiz4XltTwoPz4mVFG6kvPqAIhVf10",
@@ -251,34 +254,31 @@ window.post=async function(){
   }
 }
 
-// ---------------- VERIFIED CHECK ----------------
-async function isGitHubVerified(nick){
-    if(nick !== "bladtikaa-design") return false;
-    try{
-        const res = await fetch(`https://api.github.com/users/${nick}`);
-        if(res.ok){
-            const data = await res.json();
-            return data.login.toLowerCase() === "bladtikaa-design";
-        }
-        return false;
-    }catch(e){ console.error(e); return false; }
-}
+// ---------------- VERIFIED ----------------
+function isVerified(nick){ return nick === "G"; }
+function getVerifiedHTML(nick){ return isVerified(nick) ? "<span class='verified'>✔</span>" : ""; }
 
 // ---------------- REALTIME POSTS & MESSAGES ----------------
 function startRealtime(){
-  onSnapshot(collection(db,"posts"), async (snapshot)=>{
+  onSnapshot(collection(db,"posts"),(snapshot)=>{
       document.getElementById("posts").innerHTML="";
-      for(const docSnap of snapshot.docs){
+      snapshot.forEach((docSnap)=>{
           let data = docSnap.data();
-          let img = data.photo ? `<img class='postimg' src='${data.photo}'>` : "";
-          let del = (data.user === username) ? `<button class='delete' onclick='delPost("${docSnap.id}")'>🗑</button>` : "";
-          let verified = await isGitHubVerified(data.user) ? "<span class='verified'>✔</span>" : "";
-
           let div = document.createElement("div");
           div.className = "post";
-          div.innerHTML = del + `<img class='avatar' src='${data.avatar}' onclick='openProfile("${data.user}")'> <b onclick='openProfile("${data.user}")'>${data.user}</b>${verified}<br>${data.text}<br>${img}<br><button onclick='like("${docSnap.id}",${data.like})'>👍 ${data.like}</button>`;
+
+          let img = data.photo ? `<img class='postimg' src='${data.photo}'>` : "";
+          let del = (data.user === username) ? `<button class='delete' onclick='delPost("${docSnap.id}")'>🗑</button>` : "";
+
+          div.innerHTML = del + `
+            <img class='avatar' src='${data.avatar}' onclick='openProfile("${data.user}")'> 
+            <b onclick='openProfile("${data.user}")'>${data.user}${getVerifiedHTML(data.user)}</b><br>
+            ${data.text}<br>
+            ${img}<br>
+            <button onclick='like("${docSnap.id}",${data.like})'>👍 ${data.like}</button>
+          `;
           document.getElementById("posts").prepend(div);
-      }
+      });
   });
 
   onSnapshot(collection(db,"messages"), snapshot=>{
@@ -329,27 +329,12 @@ document.getElementById("closeProfile").onclick=()=>{
 window.openProfile = async function(user){
   activeProfile = user;
   document.getElementById("profileDiv").style.display="block";
+  document.getElementById("profileNick").innerHTML = user + getVerifiedHTML(user);
 
-  // Verified check
-  document.getElementById("profileNick").innerHTML = user;
-  if(await isGitHubVerified(user)){
-      document.getElementById("profileNick").innerHTML += "<span class='verified'>✔</span>";
-  }
-
-  const subsSnap = await getDocs(collection(db,"subscriptions"));
-  let count = 0; let subscribed = false;
-  subsSnap.forEach(s=>{
-      const d = s.data();
-      if(d.to===user) count++;
-      if(d.from===username && d.to===user) subscribed=true;
-  });
-  document.getElementById("subCount").innerText = count;
-  if(user===username){
+  if(user===username){ 
       document.getElementById("subscribeBtn").style.display="none";
   } else {
       document.getElementById("subscribeBtn").style.display="inline-block";
-      document.getElementById("subscribeBtn").disabled = subscribed;
-      document.getElementById("subscribeBtn").innerText = subscribed ? "Subscribed" : "Subscribe";
   }
 
   if(!messages[user]) messages[user] = [];
@@ -369,6 +354,7 @@ document.getElementById("subscribeBtn").onclick=async()=>{
 const servers={iceServers:[{urls:"stun:stun.l.google.com:19302"}]};
 async function startCamera(){ localStream=await navigator.mediaDevices.getUserMedia({video:true,audio:true}); }
 async function endCall(){ if(peerConnection){ peerConnection.close(); peerConnection=null; } currentCallDoc=null; document.getElementById("callVideo").style.display="none"; }
+
 </script>
 </body>
 </html>
