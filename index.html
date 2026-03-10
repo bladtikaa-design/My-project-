@@ -6,7 +6,7 @@
 <style>
 body{font-family:sans-serif;background:#f0f0f0;text-align:center;margin:0;}
 
-/* ---------------- ANIMATED GREEN TEXT ---------------- */
+/* -------------- ANIMATED GREEN TEXT -------------- */
 #animatedText{
   font-size:24px;
   font-weight:bold;
@@ -20,7 +20,7 @@ body{font-family:sans-serif;background:#f0f0f0;text-align:center;margin:0;}
   100% { color: #007700; }
 }
 
-/* ---------------- EXISTING STYLES ---------------- */
+/* -------------- EXISTING STYLES -------------- */
 #top{background:white;padding:10px;}
 .post{background:white;margin:10px auto;padding:10px;border-radius:10px;max-width:400px;position:relative;}
 .avatar{width:40px;height:40px;border-radius:50%;object-fit:cover;cursor:pointer;}
@@ -33,6 +33,53 @@ body{font-family:sans-serif;background:#f0f0f0;text-align:center;margin:0;}
 #callVideo{display:none;width:100%;margin-top:5px;border-radius:10px;}
 #incomingCall{display:none;background:#333;color:white;padding:10px;border-radius:10px;margin-bottom:5px;}
 #callUserBtn{padding:5px 8px;border:none;background:blue;color:white;border-radius:5px;cursor:pointer;margin-bottom:5px;}
+
+/* -------------- LIQUID GLASS PROFILE BUTTON -------------- */
+#profileButton{
+  position:fixed;
+  bottom:20px;
+  right:20px;
+  width:60px;
+  height:60px;
+  border-radius:50%;
+  backdrop-filter: blur(10px);
+  background: rgba(255,255,255,0.2);
+  border: 2px solid rgba(255,255,255,0.3);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  cursor:pointer;
+  transition: all 0.3s ease;
+}
+#profileButton:hover{
+  background: rgba(255,255,255,0.3);
+  transform: scale(1.05);
+}
+#profileButton img{
+  width:50px;
+  height:50px;
+  border-radius:50%;
+  object-fit:cover;
+  backdrop-filter: blur(10px);
+  border:2px solid rgba(255,255,255,0.3);
+}
+#subscribeBtn{
+  padding:5px 10px;
+  border:none;
+  border-radius:30px;
+  background: rgba(255,255,255,0.2);
+  color:white;
+  margin-top:5px;
+  cursor:pointer;
+  backdrop-filter: blur(10px);
+  transition: all 0.3s ease;
+}
+#subscribeBtn:hover{
+  background: rgba(255,255,255,0.3);
+}
+
+/* ---------------- Login ---------------- */
+#login input, #login button{padding:5px; border-radius:5px; margin:5px;}
 </style>
 
 <!-- Подключение Google reCAPTCHA -->
@@ -44,17 +91,18 @@ body{font-family:sans-serif;background:#f0f0f0;text-align:center;margin:0;}
 <!-- -------- ANIMATED GREEN TEXT -------- -->
 <div id="animatedText">BLADTIK SITE</div>
 
+<!-- -------- LOGIN -------- -->
 <div id="login">
 <h2>Nickname</h2>
 <input id="nickname"><br><br>
 <input type="file" id="avatarInput"><br><br>
 
-<!-- Капча -->
 <div class="g-recaptcha" data-sitekey="6LfBxYQsAAAAAEdWSoTfDLNQw5VqQcexGKbzuDY3"></div><br>
 
 <button onclick="login()">Enter</button>
 </div>
 
+<!-- -------- APP -------- -->
 <div id="app" style="display:none">
 <div id="top">
 <img id="myavatar" class="avatar">
@@ -68,27 +116,34 @@ body{font-family:sans-serif;background:#f0f0f0;text-align:center;margin:0;}
 <div id="posts"></div>
 </div>
 
+<!-- -------- PROFILE DIV -------- -->
 <div id="profileDiv">
 <b id="profileNick"></b><br>
-<button id="callUserBtn">📞 Позвонить</button><br><br>
+<div>Subscribers: <span id="subCount">0</span></div>
+<button id="subscribeBtn">Subscribe</button><br><br>
+<button id="callUserBtn">📞 Call</button><br><br>
 <div id="dmMessages"></div>
-<input id="dmInput" placeholder="Написать..." style="width:70%;padding:5px;border-radius:5px;border:none;">
+<input id="dmInput" placeholder="Write..." style="width:70%;padding:5px;border-radius:5px;border:none;">
 <button id="dmSend">➤</button><br><br>
 <div id="incomingCall">
-<b id="callerName"></b> звонит!<br>
-<button id="acceptCallBtn">Принять</button>
-<button id="rejectCallBtn">Отклонить</button>
+<b id="callerName"></b> is calling!<br>
+<button id="acceptCallBtn">Accept</button>
+<button id="rejectCallBtn">Reject</button>
 </div>
 <video id="callVideo" autoplay playsinline></video><br>
-<button id="closeProfile">Закрыть</button>
+<button id="closeProfile">Close</button>
+</div>
+
+<!-- -------- LIQUID GLASS PROFILE BUTTON -------- -->
+<div id="profileButton">
+<img id="profileBtnImg" src="">
 </div>
 
 <audio id="ringtone" src="https://actions.google.com/sounds/v1/alarms/alarm_clock.ogg" preload="auto"></audio>
 
 <script type="module">
-/* ---------------- Твой весь скрипт без изменений ---------------- */
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app.js";
-import { getFirestore, collection, addDoc, onSnapshot, updateDoc, doc, deleteDoc, setDoc } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js";
+import { getFirestore, collection, addDoc, onSnapshot, updateDoc, doc, deleteDoc, setDoc, getDocs, query, where } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js";
 
 const firebaseConfig = {
 apiKey:"AIzaSyAE46eiz4XltTwoPz4mVFG6kvPqAIhVf10",
@@ -109,31 +164,60 @@ let activeProfile = "";
 let peerConnection, localStream;
 let currentCallDoc = null;
 
-// ---------------- Profile ----------------
-window.openProfile = function(user){
+// ---------------- PROFILE ----------------
+window.openProfile = async function(user){
     activeProfile = user;
     document.getElementById("profileDiv").style.display="block";
     document.getElementById("profileNick").innerText = user;
+
+    // Check subscribers
+    const subsSnap = await getDocs(collection(db,"subscriptions"));
+    let count = 0;
+    let subscribed = false;
+    subsSnap.forEach(s=>{
+        const d = s.data();
+        if(d.to===user) count++;
+        if(d.from===username && d.to===user) subscribed=true;
+    });
+    document.getElementById("subCount").innerText = count;
+
+    // Show/hide subscribe button
+    if(user===username){
+        document.getElementById("subscribeBtn").style.display="none";
+    } else {
+        document.getElementById("subscribeBtn").style.display="inline-block";
+        document.getElementById("subscribeBtn").disabled = subscribed;
+        document.getElementById("subscribeBtn").innerText = subscribed ? "Subscribed" : "Subscribe";
+    }
+
     if(!messages[user]) messages[user] = [];
     updateDM();
 };
-document.getElementById("closeProfile").onclick = ()=>{
-    document.getElementById("profileDiv").style.display="none";
-    document.getElementById("callVideo").style.display="none";
-    endCall();
+
+// ---------------- SUBSCRIBE ----------------
+document.getElementById("subscribeBtn").onclick=async()=>{
+    await addDoc(collection(db,"subscriptions"),{from:username,to:activeProfile});
+    document.getElementById("subscribeBtn").disabled=true;
+    document.getElementById("subscribeBtn").innerText="Subscribed";
+    let count = parseInt(document.getElementById("subCount").innerText);
+    document.getElementById("subCount").innerText = count+1;
+};
+
+// ---------------- PROFILE BUTTON ----------------
+document.getElementById("profileButton").onclick=()=>{
+    openProfile(username);
 };
 
 // ---------------- Login ----------------
 window.login=function(){
     const response = grecaptcha.getResponse();
     if(response.length === 0){
-        return alert("Пожалуйста, подтвердите, что вы не робот!");
+        return alert("Please verify captcha!");
     }
-
     username=document.getElementById("nickname").value;
-    if(!username) return alert("Введите ник!");
+    if(!username) return alert("Enter nickname!");
     let file=document.getElementById("avatarInput").files[0];
-    if(!file) return alert("Выберите аватар!");
+    if(!file) return alert("Select avatar!");
 
     let reader=new FileReader();
     reader.onload=function(){ 
@@ -152,9 +236,8 @@ function afterLogin(){
     document.getElementById("app").style.display="block";
     document.getElementById("user").innerText=username;
     document.getElementById("myavatar").src=avatar;
-    if(username==="bladtikaa-design"){ 
-        document.getElementById("user").innerHTML += ' <span style="color:red;font-weight:bold;">DEVELOPER</span> <span style="background:black;color:red;border-radius:50%;padding:3px 6px;">✔</span>';
-    }
+    document.getElementById("profileBtnImg").src = avatar;
+
     startRealtime();
     startCamera();
 }
@@ -166,7 +249,7 @@ if(username && avatar){
     document.getElementById("login").style.display="block";
 }
 
-// ---------------- Posts ----------------
+// ---------------- POSTS ----------------
 window.post=async function(){
     let text=document.getElementById("text").value;
     let photoFile=document.getElementById("photo").files[0]; 
