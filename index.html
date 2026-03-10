@@ -3,86 +3,48 @@
 <head>
 <meta charset="UTF-8">
 <title>My Social</title>
-
 <style>
+body{font-family:sans-serif;background:#f0f0f0;text-align:center;margin:0;}
 
-body{
-font-family:sans-serif;
-background:#f0f0f0;
-text-align:center;
-margin:0;
-}
-
-/* ----------- GREEN ANIMATION TEXT ----------- */
-
+/* ---------------- ANIMATED GREEN TEXT ---------------- */
 #animatedText{
-font-size:24px;
-font-weight:bold;
-animation:greenGlow 2s infinite alternate;
+  font-size:24px;
+  font-weight:bold;
+  color:#00ff00;
+  margin:10px 0;
+  animation: greenGlow 2s infinite alternate;
 }
-
 @keyframes greenGlow{
-0%{color:#00ff00;}
-50%{color:#66ff66;}
-100%{color:#007700;}
+  0% { color: #00ff00; }
+  50% { color: #55ff55; }
+  100% { color: #007700; }
 }
 
-/* ----------- TOP BAR ----------- */
+/* ---------------- EXISTING STYLES ---------------- */
+#top{background:white;padding:10px;}
+.post{background:white;margin:10px auto;padding:10px;border-radius:10px;max-width:400px;position:relative;}
+.avatar{width:40px;height:40px;border-radius:50%;object-fit:cover;cursor:pointer;}
+.postimg{max-width:100%;border-radius:10px;margin-top:5px;}
+.delete{position:absolute;top:5px;right:5px;border:none;background:red;color:white;border-radius:10px;cursor:pointer;}
+.dark{background:#111;color:white;}
+.dark .post{background:#1e1e1e;}
+#dmMessages{height:120px;overflow-y:auto;background:#111;padding:5px;border-radius:5px;margin-bottom:5px;}
+#callVideo{display:none;width:100%;margin-top:5px;border-radius:10px;}
+#incomingCall{display:none;background:#333;color:white;padding:10px;border-radius:10px;margin-bottom:5px;}
+#callUserBtn{padding:5px 8px;border:none;background:blue;color:white;border-radius:5px;cursor:pointer;margin-bottom:5px;}
 
-#top{
-background:white;
-padding:10px;
-display:flex;
-align-items:center;
-justify-content:center;
-gap:15px;
-}
+/* ---------------- LOGIN ---------------- */
+#login input, #login button{padding:5px; border-radius:5px; margin:5px;}
 
-/* ----------- POSTS ----------- */
-
-.post{
-background:white;
-margin:10px auto;
-padding:10px;
-border-radius:10px;
-max-width:400px;
-position:relative;
-}
-
-.avatar{
-width:40px;
-height:40px;
-border-radius:50%;
-object-fit:cover;
-cursor:pointer;
-}
-
-.postimg{
-max-width:100%;
-border-radius:10px;
-margin-top:5px;
-}
-
-.delete{
-position:absolute;
-top:5px;
-right:5px;
-border:none;
-background:red;
-color:white;
-border-radius:10px;
-cursor:pointer;
-}
-
-/* ----------- BELL ----------- */
-
+/* ---------------- BELL ---------------- */
 #bell{
-position:relative;
-font-size:22px;
+position:fixed;
+top:15px;
+right:20px;
+font-size:24px;
 cursor:pointer;
 color:gray;
 }
-
 #bellCount{
 position:absolute;
 top:-6px;
@@ -92,157 +54,136 @@ color:white;
 border-radius:50%;
 padding:2px 6px;
 font-size:12px;
-display:none;
 }
 
-/* ----------- NOTIFICATION PANEL ----------- */
-
-#notifPanel{
+/* ---------------- NOTIFICATION PANEL ---------------- */
+#notifications{
 display:none;
 position:fixed;
-top:70px;
+top:50px;
 right:20px;
-width:250px;
-background:white;
-border-radius:10px;
-box-shadow:0 0 10px rgba(0,0,0,0.2);
-padding:10px;
+width:260px;
 max-height:300px;
 overflow:auto;
-z-index:1000;
-}
-
-.notif{
-padding:6px;
-border-bottom:1px solid #ddd;
-font-size:14px;
-}
-
-/* ----------- PROFILE BUTTON ----------- */
-
-#profileButton{
-position:fixed;
-bottom:20px;
-right:20px;
-height:60px;
-width:180px;
-border-radius:50px;
-background:rgba(255,255,255,0.2);
+background:rgba(0,0,0,0.8);
+color:white;
+border-radius:10px;
+padding:10px;
 backdrop-filter:blur(10px);
-display:flex;
-align-items:center;
-padding-left:10px;
-cursor:pointer;
+}
+.notification{
+padding:5px;
+border-bottom:1px solid #444;
 }
 
+/* ---------------- LIQUID GLASS PROFILE BUTTON ---------------- */
+#profileButton{
+  position:fixed;
+  bottom:20px;
+  right:20px;
+  height:60px;
+  width:180px;
+  border-radius:50px;
+  background: rgba(255,255,255,0.15);
+  backdrop-filter: blur(10px);
+  border: 2px solid rgba(255,255,255,0.3);
+  display:flex;
+  align-items:center;
+  cursor:pointer;
+  padding-left:10px;
+}
 #profileButton img{
-width:50px;
-height:50px;
-border-radius:50%;
-margin-right:10px;
-object-fit:cover;
+  width:50px;
+  height:50px;
+  border-radius:50%;
+  object-fit:cover;
+  margin-right:10px;
 }
+#profileButton span{color:white;font-weight:bold;}
 
-#profileButton span{
-font-weight:bold;
-}
-
-/* ----------- PROFILE WINDOW ----------- */
-
+/* ---------------- PROFILE MENU ---------------- */
 #profileDiv{
-display:none;
-position:fixed;
-top:50%;
-left:50%;
-transform:translate(-50%,-50%);
-background:#222;
-color:white;
-padding:15px;
-border-radius:15px;
-width:300px;
-z-index:2000;
+  display:none;
+  position:fixed;
+  top:50%;
+  left:50%;
+  transform:translate(-50%,-50%);
+  background: rgba(0,0,0,0.6);
+  padding:20px;
+  border-radius:20px;
+  z-index:1000;
+  width:300px;
+  backdrop-filter: blur(10px);
 }
-
 #subscribeBtn{
-border:none;
-background:#4CAF50;
-color:white;
-padding:5px 10px;
-border-radius:20px;
-cursor:pointer;
+  padding:5px 10px;
+  border:none;
+  border-radius:30px;
+  background: rgba(255,255,255,0.2);
+  color:white;
+  cursor:pointer;
 }
-
 </style>
 
-</head>
+<script src="https://www.google.com/recaptcha/api.js" async defer></script>
 
+</head>
 <body>
 
 <div id="animatedText">BLADTIK SITE</div>
 
-<div id="top">
-
-<img id="myavatar" class="avatar">
-
-<b id="user"></b>
-
-<div id="bell" onclick="toggleNotif()">
-🔔
-<div id="bellCount">0</div>
+<!-- 🔔 BELL -->
+<div id="bell" onclick="toggleNotifications()">🔔
+<span id="bellCount">0</span>
 </div>
 
-<button onclick="theme()">🌙</button>
+<div id="notifications"></div>
 
+<!-- LOGIN -->
+<div id="login">
+<h2>Nickname</h2>
+<input id="nickname"><br><br>
+<input type="file" id="avatarInput"><br><br>
+<div class="g-recaptcha" data-sitekey="6LfBxYQsAAAAAEdWSoTfDLNQw5VqQcexGKbzuDY3"></div><br>
+<button onclick="login()">Enter</button>
+</div>
+
+<!-- APP -->
+<div id="app" style="display:none">
+<div id="top">
+<img id="myavatar" class="avatar">
+<b id="user"></b>
+<button onclick="theme()">🌙</button>
 </div>
 
 <br>
-
-<input id="text" placeholder="Write post">
-<br><br>
-
-<input type="file" id="photo">
-<br><br>
-
+<input id="text" placeholder="Write post"><br><br>
+<input type="file" id="photo"><br><br>
 <button onclick="post()">Post</button>
-
 <div id="posts"></div>
-
-<!-- NOTIFICATIONS -->
-
-<div id="notifPanel"></div>
+</div>
 
 <!-- PROFILE -->
-
 <div id="profileDiv">
-
-<b id="profileNick"></b>
-<br>
-
-Subscribers: <span id="subCount">0</span>
-
-<br><br>
-
-<button id="subscribeBtn">Subscribe</button>
-
-<br><br>
-
-<button onclick="closeProfile()">Close</button>
-
+<b id="profileNick"></b><br>
+Subscribers: <span id="subCount">0</span><br>
+<button id="subscribeBtn">Subscribe</button><br><br>
+<div id="dmMessages"></div>
+<input id="dmInput" placeholder="Write..." style="width:70%">
+<button id="dmSend">➤</button><br><br>
+<button id="closeProfile">Close</button>
 </div>
 
-<!-- PROFILE BUTTON -->
-
-<div id="profileButton" onclick="openProfile(username)">
+<div id="profileButton">
 <img id="profileBtnImg">
 <span>My Profile</span>
 </div>
 
 <script type="module">
-
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app.js";
 import { getFirestore, collection, addDoc, onSnapshot, updateDoc, doc, deleteDoc, getDocs } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js";
 
-const firebaseConfig = {
+const firebaseConfig={
 apiKey:"AIzaSyAE46eiz4XltTwoPz4mVFG6kvPqAIhVf10",
 authDomain:"mysocial-dabdf.firebaseapp.com",
 projectId:"mysocial-dabdf",
@@ -251,117 +192,74 @@ messagingSenderId:"812073291348",
 appId:"1:812073291348:web:e68dbf6c412c72de5aa7c1"
 };
 
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
+const app=initializeApp(firebaseConfig);
+const db=getFirestore(app);
 
-let username = localStorage.getItem("username");
-let avatar = localStorage.getItem("avatar");
+let username=localStorage.getItem("username");
+let avatar=localStorage.getItem("avatar");
 
-let notifications = [];
+let notifications=[];
+
+/* ---------- NOTIFICATIONS ---------- */
+
+window.toggleNotifications=function(){
+let box=document.getElementById("notifications");
+box.style.display = box.style.display==="block" ? "none" : "block";
+}
 
 function addNotification(text){
-
 notifications.push(text);
 
-document.getElementById("notifPanel").innerHTML +=
-`<div class="notif">${text}</div>`;
+document.getElementById("bellCount").innerText=notifications.length;
 
-updateBell();
+let box=document.getElementById("notifications");
+box.innerHTML="";
 
+notifications.slice().reverse().forEach(n=>{
+box.innerHTML+=`<div class="notification">${n}</div>`;
+});
 }
 
-function updateBell(){
+/* ---------- LOGIN ---------- */
 
-let count = notifications.length;
+window.login=function(){
+const response=grecaptcha.getResponse();
+if(response.length===0){alert("captcha");return;}
 
-let el = document.getElementById("bellCount");
+username=document.getElementById("nickname").value;
 
-if(count>0){
+let file=document.getElementById("avatarInput").files[0];
+let reader=new FileReader();
 
-el.style.display="block";
-el.innerText=count;
-
-}else{
-
-el.style.display="none";
-
-}
-
-}
-
-window.toggleNotif=function(){
-
-let p = document.getElementById("notifPanel");
-
-if(p.style.display=="block"){
-
-p.style.display="none";
-
-notifications=[];
-
-updateBell();
-
-}else{
-
-p.style.display="block";
-
-}
-
-}
-
-/* -------- LOGIN -------- */
-
-if(!username){
-
-username=prompt("Enter nickname");
-
-let file=prompt("Paste avatar image link");
-
-avatar=file;
+reader.onload=function(){
+avatar=reader.result;
 
 localStorage.setItem("username",username);
-
 localStorage.setItem("avatar",avatar);
 
+afterLogin();
+};
+
+reader.readAsDataURL(file);
 }
 
+function afterLogin(){
+document.getElementById("login").style.display="none";
+document.getElementById("app").style.display="block";
 document.getElementById("user").innerText=username;
-
 document.getElementById("myavatar").src=avatar;
-
 document.getElementById("profileBtnImg").src=avatar;
 
-/* -------- POSTS -------- */
+startRealtime();
+}
+
+if(username && avatar){afterLogin();}
+
+/* ---------- POSTS ---------- */
 
 window.post=async function(){
 
 let text=document.getElementById("text").value;
-
-let photoFile=document.getElementById("photo").files[0];
-
-let photo="";
-
-if(photoFile){
-
-let reader=new FileReader();
-
-reader.onload=async function(){
-
-photo=reader.result;
-
-await addDoc(collection(db,"posts"),{
-user:username,
-avatar:avatar,
-text:text,
-photo:photo,
-like:0
-});
-
-}
-
-reader.readAsDataURL(photoFile);
-
-}else{
 
 await addDoc(collection(db,"posts"),{
 user:username,
@@ -373,38 +271,29 @@ like:0
 
 }
 
-}
+/* ---------- REALTIME ---------- */
 
-/* -------- POSTS REALTIME -------- */
+function startRealtime(){
 
-onSnapshot(collection(db,"posts"),(snapshot)=>{
+onSnapshot(collection(db,"posts"),snapshot=>{
 
 document.getElementById("posts").innerHTML="";
 
-snapshot.forEach((docSnap)=>{
+snapshot.forEach(docSnap=>{
 
 let data=docSnap.data();
 
-let img=data.photo?`<img class="postimg" src="${data.photo}">`:"";
-
-let del=(data.user===username)?`<button class="delete" onclick='delPost("${docSnap.id}")'>🗑</button>`:"";
-
 let div=document.createElement("div");
-
 div.className="post";
 
-div.innerHTML=
-
-del+
-
-`<img class="avatar" src="${data.avatar}" onclick='openProfile("${data.user}")'>
+div.innerHTML=`
+<img class="avatar" src="${data.avatar}" onclick='openProfile("${data.user}")'>
 <b>${data.user}</b>
 <br>
 ${data.text}
 <br>
-${img}
-<br>
-<button onclick='like("${docSnap.id}",${data.like},"${data.user}")'>👍 ${data.like}</button>`;
+<button onclick='like("${docSnap.id}",${data.like})'>👍 ${data.like}</button>
+`;
 
 document.getElementById("posts").prepend(div);
 
@@ -412,45 +301,38 @@ document.getElementById("posts").prepend(div);
 
 });
 
-/* -------- LIKE -------- */
+}
 
-window.like=async function(id,count,user){
+/* ---------- LIKE ---------- */
 
+window.like=async function(id,count){
 await updateDoc(doc(db,"posts",id),{like:count+1});
+}
 
-if(user!=username){
+/* ---------- SUBSCRIBE ---------- */
 
-addNotification(user+" поставил лайк вашему посту");
+document.getElementById("subscribeBtn").onclick=async()=>{
+
+await addDoc(collection(db,"subscriptions"),{from:username,to:activeProfile});
+
+addNotification(activeProfile+" подписался на вас");
 
 }
 
-}
+/* ---------- PROFILE ---------- */
 
-/* -------- DELETE -------- */
+let activeProfile="";
 
-window.delPost=async function(id){
-
-await deleteDoc(doc(db,"posts",id));
-
-}
-
-/* -------- PROFILE -------- */
-
-window.openProfile=async function(user){
-
+window.openProfile=function(user){
+activeProfile=user;
 document.getElementById("profileDiv").style.display="block";
-
 document.getElementById("profileNick").innerText=user;
-
 }
 
-window.closeProfile=function(){
-
+document.getElementById("closeProfile").onclick=()=>{
 document.getElementById("profileDiv").style.display="none";
-
 }
 
 </script>
-
 </body>
 </html>
