@@ -45,12 +45,29 @@ body{font-family:sans-serif;background:#f0f0f0;text-align:center;margin:0;}
   background: rgba(255, 255, 255, 0.3);
   box-shadow: 0 12px 40px 0 rgba(0,0,0,0.25), 0 0 2px 2px rgba(255,255,255,0.4) inset;
 }
+
+/* ---------------- Top Left Text ---------------- */
+#siteText {
+  position: fixed; top:10px; left:10px; z-index:1002;
+  font-weight:bold; font-size:20px; font-family:sans-serif;
+  background: linear-gradient(90deg, #00ff00, #009900, #00ff55, #00aa00);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: gradientShift 4s ease infinite;
+}
+@keyframes gradientShift {
+  0%{background-position:0% 50%;}
+  50%{background-position:100% 50%;}
+  100%{background-position:0% 50%;}
+}
 </style>
 
 <!-- Подключение Google reCAPTCHA -->
 <script src="https://www.google.com/recaptcha/api.js" async defer></script>
 </head>
 <body>
+
+<div id="siteText">BLADTIK SITE OFFICIAL</div>
 
 <div id="login">
 <h2>Nickname</h2>
