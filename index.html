@@ -8,7 +8,6 @@
 
 body{font-family:sans-serif;background:#f0f0f0;text-align:center;margin:0;}
 
-/* GREEN TEXT */
 #animatedText{
 font-size:24px;
 font-weight:bold;
@@ -23,7 +22,6 @@ animation:greenGlow 2s infinite alternate;
 100%{color:#007700;}
 }
 
-/* POSTS */
 #top{background:white;padding:10px;}
 
 .post{
@@ -60,11 +58,9 @@ border-radius:10px;
 cursor:pointer;
 }
 
-/* DARK */
 .dark{background:#111;color:white;}
 .dark .post{background:#1e1e1e;}
 
-/* PROFILE BUTTON */
 #profileButton{
 position:fixed;
 bottom:20px;
@@ -89,8 +85,6 @@ height:50px;
 border-radius:50%;
 margin-right:10px;
 }
-
-/* EDIT PROFILE BUTTON */
 
 #editProfileBtn{
 position:fixed;
@@ -117,8 +111,6 @@ transform:scale(1.05);
 background:rgba(255,255,255,0.25);
 }
 
-/* RAINBOW */
-
 #rainbowDrop{
 position:fixed;
 top:-100%;
@@ -136,8 +128,6 @@ animation:rainDrop 1.2s linear forwards;
 0%{top:-100%;}
 100%{top:100%;}
 }
-
-/* COSMOS */
 
 #cosmicEffect{
 position:fixed;
@@ -158,34 +148,24 @@ from{background-position:0 0;}
 to{background-position:200px 200px;}
 }
 
-/* MINI PROFILE */
-
-#fullProfile{
+#profileDiv{
 display:none;
 position:fixed;
-top:20px;
-left:20px;
-background:rgba(0,0,0,0.7);
-padding:15px;
-border-radius:15px;
+top:50%;
+left:50%;
+transform:translate(-50%,-50%);
+background:rgba(0,0,0,0.8);
+padding:20px;
+border-radius:20px;
 color:white;
 z-index:3000;
 backdrop-filter:blur(10px);
 }
 
-#fullProfile img{
-width:50px;
-height:50px;
+#profileDiv img{
+width:60px;
+height:60px;
 border-radius:50%;
-}
-
-.onlineDot{
-width:10px;
-height:10px;
-background:#00ff00;
-border-radius:50%;
-display:inline-block;
-margin-left:5px;
 }
 
 </style>
@@ -196,8 +176,6 @@ margin-left:5px;
 <body>
 
 <div id="animatedText">BLADTIK SITE</div>
-
-<!-- LOGIN -->
 
 <div id="login">
 
@@ -216,8 +194,6 @@ data-sitekey="6LfBxYQsAAAAAEdWSoTfDLNQw5VqQcexGKbzuDY3">
 <button onclick="login()">Enter</button>
 
 </div>
-
-<!-- APP -->
 
 <div id="app" style="display:none">
 
@@ -243,57 +219,26 @@ data-sitekey="6LfBxYQsAAAAAEdWSoTfDLNQw5VqQcexGKbzuDY3">
 
 </div>
 
-<!-- PROFILE BUTTON -->
-
 <div id="profileButton">
-
 <img id="profileBtnImg">
-
 <span>My Profile</span>
-
 </div>
 
-<!-- EDIT PROFILE BUTTON -->
-
-<div id="editProfileBtn">
-
-✏️ Edit Profile
-
-</div>
-
-<!-- EFFECTS -->
+<div id="editProfileBtn">✏️ Edit Profile</div>
 
 <div id="rainbowDrop"></div>
 
 <div id="cosmicEffect"></div>
 
-<div id="fullProfile">
-
-<img id="fullAvatar">
-
-<br>
-
-<b id="fullNick"></b>
-
-<span class="onlineDot"></span>
-
+<div id="profileDiv">
+<img id="profileAvatar"><br><br>
+<b id="profileNick"></b>
 </div>
 
 <script type="module">
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app.js";
-
-import {
-getFirestore,
-collection,
-addDoc,
-onSnapshot,
-updateDoc,
-doc,
-deleteDoc
-}
-
-from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js";
+import { getFirestore, collection, addDoc, onSnapshot, updateDoc, doc } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js";
 
 const firebaseConfig={
 apiKey:"AIzaSyAE46",
@@ -302,7 +247,6 @@ projectId:"mysocial-dabdf"
 };
 
 const app=initializeApp(firebaseConfig);
-
 const db=getFirestore(app);
 
 let username=localStorage.getItem("username");
@@ -326,7 +270,6 @@ reader.onload=function(){
 avatar=reader.result;
 
 localStorage.setItem("username",username);
-
 localStorage.setItem("avatar",avatar);
 
 afterLogin();
@@ -340,13 +283,10 @@ reader.readAsDataURL(file);
 function afterLogin(){
 
 document.getElementById("login").style.display="none";
-
 document.getElementById("app").style.display="block";
 
 document.getElementById("user").innerText=username;
-
 document.getElementById("myavatar").src=avatar;
-
 document.getElementById("profileBtnImg").src=avatar;
 
 startRealtime();
@@ -354,9 +294,7 @@ startRealtime();
 }
 
 if(username && avatar){
-
 afterLogin();
-
 }
 
 function startRealtime(){
@@ -370,24 +308,19 @@ snapshot.forEach((docSnap)=>{
 let data=docSnap.data();
 
 let div=document.createElement("div");
-
 div.className="post";
 
-let img=data.photo
-? `<img class='postimg' src='${data.photo}'>`
-: "";
+let img=data.photo ? `<img class='postimg' src='${data.photo}'>` : "";
 
 div.innerHTML=`
-<img class='avatar' src='${data.avatar}'>
-<b>${data.user}</b>
+<img class='avatar' src='${data.avatar}' onclick='openProfile("${data.user}","${data.avatar}")'>
+<b onclick='openProfile("${data.user}","${data.avatar}")'>${data.user}</b>
 <br>
 ${data.text}
 <br>
 ${img}
 <br>
-<button onclick='like("${docSnap.id}",${data.like})'>
-👍 ${data.like}
-</button>
+<button onclick='like("${docSnap.id}",${data.like})'>👍 ${data.like}</button>
 `;
 
 document.getElementById("posts").prepend(div);
@@ -403,15 +336,10 @@ window.post=async function(){
 let text=document.getElementById("text").value;
 
 await addDoc(collection(db,"posts"),{
-
 user:username,
-
 avatar:avatar,
-
 text:text,
-
 like:0
-
 });
 
 }
@@ -419,28 +347,31 @@ like:0
 window.like=async function(id,count){
 
 await updateDoc(doc(db,"posts",id),{
-
 like:count+1
-
 });
 
 }
 
 window.theme=function(){
-
 document.body.classList.toggle("dark");
+}
+
+window.openProfile=function(user,av){
+
+document.getElementById("cosmicEffect").style.display="block";
+
+document.getElementById("profileDiv").style.display="block";
+document.getElementById("profileNick").innerText=user;
+document.getElementById("profileAvatar").src=av;
 
 }
 
-/* EDIT PROFILE EFFECT */
+document.getElementById("profileButton").onclick=()=>{
+openProfile(username,avatar);
+}
 
 const editBtn=document.getElementById("editProfileBtn");
-
 const rainbow=document.getElementById("rainbowDrop");
-
-const cosmic=document.getElementById("cosmicEffect");
-
-const fullProfile=document.getElementById("fullProfile");
 
 editBtn.onclick=()=>{
 
@@ -450,33 +381,13 @@ setTimeout(()=>{
 
 rainbow.style.display="none";
 
-cosmic.style.display="block";
-
 if(navigator.vibrate){
-
 navigator.vibrate(2000);
-
 }
 
-setTimeout(()=>{
-
-cosmic.style.display="none";
-
-openFullProfile();
-
-},2000);
+openProfile(username,avatar);
 
 },1200);
-
-}
-
-function openFullProfile(){
-
-fullProfile.style.display="block";
-
-document.getElementById("fullAvatar").src=avatar;
-
-document.getElementById("fullNick").innerText=username;
 
 }
 
