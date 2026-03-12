@@ -127,6 +127,7 @@ background:black;
 color:white;
 display:none;
 padding:20px;
+overflow:auto;
 }
 
 #close{
@@ -164,6 +165,34 @@ background:white;
 cursor:pointer;
 }
 
+#dm{
+margin-left:10px;
+border:none;
+border-radius:40px;
+padding:10px 20px;
+background:#333;
+color:white;
+cursor:pointer;
+}
+
+/* чат */
+
+#chat{
+position:fixed;
+bottom:0;
+right:0;
+width:300px;
+height:400px;
+background:white;
+display:none;
+flex-direction:column;
+}
+
+#messages{
+flex:1;
+overflow:auto;
+}
+
 </style>
 </head>
 
@@ -196,7 +225,9 @@ cursor:pointer;
 <br>
 
 <input id="text" placeholder="Write post"><br><br>
+
 <input type="file" id="photo"><br><br>
+
 <button onclick="post()">Post</button>
 
 <div id="posts"></div>
@@ -229,9 +260,21 @@ cursor:pointer;
 
 <button id="subscribe">Subscribe</button>
 
+<button id="dm">💬 DM MESSAGE</button>
+
 </div>
 
 <div id="profilePosts"></div>
+
+</div>
+
+<div id="chat">
+
+<div id="messages"></div>
+
+<input id="msg">
+
+<button onclick="sendMsg()">Send</button>
 
 </div>
 
@@ -269,6 +312,8 @@ let username=localStorage.getItem("username");
 let avatar=localStorage.getItem("avatar");
 
 if(username) start();
+
+/* логин */
 
 window.login=function(){
 
@@ -355,7 +400,7 @@ like:0
 
 }
 
-/* загрузка постов */
+/* посты */
 
 onSnapshot(collection(db,"posts"),snap=>{
 
@@ -407,7 +452,7 @@ like:count+1
 
 }
 
-/* профиль */
+/* открыть профиль */
 
 let openUser="";
 
@@ -421,7 +466,37 @@ document.getElementById("nick").innerText=user;
 
 document.getElementById("avatar").src=av;
 
+document.getElementById("profilePosts").innerHTML="";
+
+let snap=await getDocs(collection(db,"posts"));
+
+snap.forEach(p=>{
+
+let d=p.data();
+
+if(d.user==user){
+
+let div=document.createElement("div");
+
+div.className="post";
+
+div.innerHTML=`${d.text}<br><img class="postimg" src="${d.photo}">`;
+
+document.getElementById("profilePosts").append(div);
+
+}
+
+});
+
 loadSubs();
+
+}
+
+/* MY PROFILE */
+
+document.getElementById("profileButton").onclick=function(){
+
+openProfile(username,avatar);
 
 }
 
@@ -465,6 +540,28 @@ document.getElementById("subs").innerText=count;
 window.closeProfile=function(){
 
 document.getElementById("profile").style.display="none";
+
+}
+
+/* DM */
+
+document.getElementById("dm").onclick=function(){
+
+document.getElementById("chat").style.display="flex";
+
+}
+
+window.sendMsg=function(){
+
+let text=document.getElementById("msg").value;
+
+let div=document.createElement("div");
+
+div.innerText=username+": "+text;
+
+document.getElementById("messages").append(div);
+
+document.getElementById("msg").value="";
 
 }
 
