@@ -84,16 +84,10 @@ border-radius:10px;
 /* лайк */
 
 .like{
-background:#eee;
 border:none;
 padding:5px 10px;
 border-radius:10px;
 cursor:pointer;
-}
-
-.dark .like{
-background:#333;
-color:white;
 }
 
 /* liquid glass */
@@ -244,7 +238,7 @@ cursor:pointer;
 <script type="module">
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app.js";
-import { getFirestore, collection, addDoc, onSnapshot, updateDoc, doc, getDocs } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js";
+import { getFirestore, collection, addDoc, onSnapshot, updateDoc, doc, getDocs, query, where } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js";
 
 const firebaseConfig={
 apiKey:"AIzaSyAE46",
@@ -271,16 +265,10 @@ document.getElementById("stars").appendChild(s);
 
 }
 
-/* сохраненный пользователь */
-
 let username=localStorage.getItem("username");
 let avatar=localStorage.getItem("avatar");
 
-if(username){
-
-start();
-
-}
+if(username) start();
 
 window.login=function(){
 
@@ -335,6 +323,8 @@ let text=document.getElementById("text").value;
 
 let file=document.getElementById("photo").files[0];
 
+if(file){
+
 let reader=new FileReader();
 
 reader.onload=async function(){
@@ -349,7 +339,19 @@ like:0
 
 }
 
-if(file) reader.readAsDataURL(file);
+reader.readAsDataURL(file);
+
+}else{
+
+addDoc(collection(db,"posts"),{
+user:username,
+avatar:avatar,
+text:text,
+photo:"",
+like:0
+});
+
+}
 
 }
 
@@ -362,6 +364,8 @@ document.getElementById("posts").innerHTML="";
 snap.forEach(d=>{
 
 let data=d.data();
+
+let img=data.photo?`<img class="postimg" src="${data.photo}">`:"";
 
 let div=document.createElement("div");
 
@@ -379,7 +383,7 @@ ${data.text}
 
 <br>
 
-<img class="postimg" src="${data.photo}">
+${img}
 
 <br>
 
@@ -405,7 +409,11 @@ like:count+1
 
 /* профиль */
 
+let openUser="";
+
 window.openProfile=async function(user,av){
+
+openUser=user;
 
 document.getElementById("profile").style.display="block";
 
@@ -413,27 +421,44 @@ document.getElementById("nick").innerText=user;
 
 document.getElementById("avatar").src=av;
 
-document.getElementById("profilePosts").innerHTML="";
-
-let snap=await getDocs(collection(db,"posts"));
-
-snap.forEach(docu=>{
-
-let d=docu.data();
-
-if(d.user==user){
-
-let div=document.createElement("div");
-
-div.className="post";
-
-div.innerHTML=`${d.text}<br><img class="postimg" src="${d.photo}">`;
-
-document.getElementById("profilePosts").append(div);
+loadSubs();
 
 }
 
+/* подписка */
+
+document.getElementById("subscribe").onclick=async function(){
+
+if(openUser==username) return;
+
+let q=query(collection(db,"subs"),where("from","==",username),where("to","==",openUser));
+
+let snap=await getDocs(q);
+
+if(!snap.empty) return alert("Already subscribed");
+
+await addDoc(collection(db,"subs"),{
+from:username,
+to:openUser
 });
+
+loadSubs();
+
+}
+
+async function loadSubs(){
+
+let snap=await getDocs(collection(db,"subs"));
+
+let count=0;
+
+snap.forEach(d=>{
+
+if(d.data().to==openUser) count++;
+
+});
+
+document.getElementById("subs").innerText=count;
 
 }
 
