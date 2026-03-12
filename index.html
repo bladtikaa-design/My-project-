@@ -10,8 +10,8 @@ body{
 margin:0;
 font-family:sans-serif;
 background:#f0f0f0;
-color:black;
 text-align:center;
+color:black;
 }
 
 .dark{
@@ -19,7 +19,23 @@ background:#000;
 color:white;
 }
 
-/* космос фон */
+/* BLADTIK текст */
+
+#animatedText{
+font-size:26px;
+font-weight:bold;
+color:#00ff00;
+margin:10px;
+animation:glow 2s infinite alternate;
+}
+
+@keyframes glow{
+0%{color:#00ff00;}
+50%{color:#55ff55;}
+100%{color:#007700;}
+}
+
+/* космос */
 
 #stars{
 position:fixed;
@@ -28,7 +44,6 @@ left:0;
 width:100%;
 height:100%;
 z-index:-1;
-overflow:hidden;
 }
 
 .star{
@@ -80,6 +95,31 @@ max-width:100%;
 border-radius:10px;
 }
 
+/* Liquid Glass кнопка */
+
+#profileButton{
+position:fixed;
+bottom:20px;
+right:20px;
+height:60px;
+width:190px;
+border-radius:50px;
+background:rgba(255,255,255,0.15);
+backdrop-filter:blur(10px);
+border:2px solid rgba(255,255,255,0.3);
+display:flex;
+align-items:center;
+gap:10px;
+padding-left:10px;
+cursor:pointer;
+}
+
+#profileButton img{
+width:45px;
+height:45px;
+border-radius:50%;
+}
+
 /* профиль */
 
 #profile{
@@ -124,8 +164,6 @@ font-weight:bold;
 opacity:0.7;
 }
 
-/* кнопка subscribe */
-
 #subscribe{
 margin-left:auto;
 border:none;
@@ -138,29 +176,6 @@ background:black;
 border:2px solid white;
 position:relative;
 overflow:hidden;
-}
-
-#subStars{
-position:absolute;
-top:0;
-left:0;
-width:100%;
-height:100%;
-pointer-events:none;
-}
-
-.subStar{
-position:absolute;
-width:2px;
-height:2px;
-background:white;
-border-radius:50%;
-animation:subMove linear infinite;
-}
-
-@keyframes subMove{
-from{transform:translateY(-5px)}
-to{transform:translateY(40px)}
 }
 
 #dm{
@@ -179,6 +194,8 @@ cursor:pointer;
 <body>
 
 <div id="stars"></div>
+
+<div id="animatedText">BLADTIK SITE OFFICIAL</div>
 
 <div id="top">
 
@@ -200,7 +217,13 @@ cursor:pointer;
 
 <div id="posts"></div>
 
-<!-- профиль -->
+<div id="profileButton">
+
+<img id="profileBtnImg">
+
+<span>MY PROFILE</span>
+
+</div>
 
 <div id="profile">
 
@@ -218,13 +241,7 @@ cursor:pointer;
 
 </div>
 
-<button id="subscribe">
-
-Subscribe
-
-<div id="subStars"></div>
-
-</button>
+<button id="subscribe">Subscribe</button>
 
 <button id="dm">💬 DM MESSAGE</button>
 
@@ -237,7 +254,7 @@ Subscribe
 <script type="module">
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app.js";
-import { getFirestore, collection, addDoc, onSnapshot, getDocs, query, where } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js";
+import { getFirestore, collection, addDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js";
 
 const firebaseConfig={
 apiKey:"AIzaSyAE46",
@@ -248,7 +265,7 @@ projectId:"mysocial-dabdf"
 const app=initializeApp(firebaseConfig);
 const db=getFirestore(app);
 
-/* космос фон */
+/* космос */
 
 for(let i=0;i<120;i++){
 
@@ -266,19 +283,16 @@ document.getElementById("stars").appendChild(star);
 
 }
 
-/* звезды в кнопке */
+/* логин сохраненный */
 
-for(let i=0;i<20;i++){
+let username=localStorage.getItem("username");
+let avatar=localStorage.getItem("avatar");
 
-let s=document.createElement("div");
+if(username){
 
-s.className="subStar";
-
-s.style.left=Math.random()*100+"%";
-
-s.style.animationDuration=(2+Math.random()*3)+"s";
-
-document.getElementById("subStars").appendChild(s);
+document.getElementById("user").innerText=username;
+document.getElementById("myavatar").src=avatar;
+document.getElementById("profileBtnImg").src=avatar;
 
 }
 
@@ -304,10 +318,14 @@ let div=document.createElement("div");
 
 div.className="post";
 
+let img=d.photo?`<img class='postimg' src='${d.photo}'>`:"";
+
 div.innerHTML=`
-<b onclick='openProfile("${d.user}","${d.avatar}")'>${d.user}</b>
+<b>${d.user}</b>
 <br>
 ${d.text}
+<br>
+${img}
 `;
 
 document.getElementById("posts").prepend(div);
@@ -322,81 +340,38 @@ window.post=async function(){
 
 let text=document.getElementById("text").value;
 
+let file=document.getElementById("photo").files[0];
+
+let reader=new FileReader();
+
+reader.onload=async function(){
+
 await addDoc(collection(db,"posts"),{
-user:"User1",
-text:text
+user:username,
+avatar:avatar,
+text:text,
+photo:reader.result
 });
 
 }
 
-/* профиль */
-
-let openUser="";
-
-window.openProfile=async function(user,av){
-
-openUser=user;
-
-document.getElementById("profile").style.display="block";
-
-document.getElementById("nick").innerText=user;
-
-loadSubs(user);
+if(file) reader.readAsDataURL(file);
 
 }
 
-/* закрыть */
+document.getElementById("profileButton").onclick=()=>{
+
+document.getElementById("profile").style.display="block";
+
+document.getElementById("nick").innerText=username;
+
+document.getElementById("avatar").src=avatar;
+
+}
 
 window.closeProfile=function(){
 
 document.getElementById("profile").style.display="none";
-
-}
-
-/* подписчики */
-
-async function loadSubs(user){
-
-let count=0;
-
-let snap=await getDocs(collection(db,"subs"));
-
-snap.forEach(doc=>{
-
-if(doc.data().to==user) count++;
-
-});
-
-document.getElementById("subCount").innerText=count;
-
-}
-
-/* подписка */
-
-document.getElementById("subscribe").onclick=async()=>{
-
-let q=query(
-collection(db,"subs"),
-where("from","==","User1"),
-where("to","==",openUser)
-);
-
-let s=await getDocs(q);
-
-if(!s.empty){
-
-alert("Already subscribed");
-
-return;
-
-}
-
-await addDoc(collection(db,"subs"),{
-from:"User1",
-to:openUser
-});
-
-loadSubs(openUser);
 
 }
 
