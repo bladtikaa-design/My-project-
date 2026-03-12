@@ -7,116 +7,75 @@
 <style>
 
 body{
-font-family:sans-serif;
+margin:0;
 background:black;
 color:white;
-margin:0;
-text-align:center;
+font-family:sans-serif;
+overflow-x:hidden;
 }
 
-#animatedText{
-font-size:26px;
-font-weight:bold;
-color:#00ff00;
-animation:glow 2s infinite alternate;
-margin:10px;
-}
+/* космос фон */
 
-@keyframes glow{
-0%{color:#00ff00;}
-50%{color:#55ff55;}
-100%{color:#007700;}
-}
-
-#top{
-background:#111;
-padding:10px;
-}
-
-.avatar{
-width:40px;
-height:40px;
-border-radius:50%;
-object-fit:cover;
-cursor:pointer;
-}
-
-.post{
-background:#111;
-margin:10px auto;
-padding:10px;
-border-radius:10px;
-max-width:400px;
-}
-
-.postimg{
-max-width:100%;
-border-radius:10px;
-margin-top:5px;
-}
-
-button{
-padding:6px 12px;
-border-radius:20px;
-border:none;
-cursor:pointer;
-}
-
-#profileButton{
-position:fixed;
-bottom:20px;
-right:20px;
-background:#222;
-color:white;
-border-radius:40px;
-padding:10px 15px;
-display:flex;
-align-items:center;
-gap:10px;
-cursor:pointer;
-}
-
-#profileButton img{
-width:40px;
-height:40px;
-border-radius:50%;
-}
-
-#profileDiv{
+#stars{
 position:fixed;
 top:0;
 left:0;
 width:100%;
 height:100%;
-background:black;
-color:white;
-display:none;
-z-index:5000;
-padding:20px;
+z-index:-1;
+overflow:hidden;
 }
 
-#closeProfile{
+.star{
 position:absolute;
+width:3px;
+height:3px;
+background:white;
+border-radius:50%;
+animation:starMove linear infinite;
+}
+
+@keyframes starMove{
+from{transform:translateY(-10px)}
+to{transform:translateY(100vh)}
+}
+
+/* профиль */
+
+#profile{
+position:fixed;
+top:0;
+left:0;
+width:100%;
+height:100%;
+padding:30px;
+box-sizing:border-box;
+display:none;
+}
+
+#close{
+position:absolute;
+right:30px;
 top:20px;
-right:20px;
 font-size:30px;
 cursor:pointer;
 }
 
-#profileTop{
+#topProfile{
 display:flex;
 align-items:center;
-gap:15px;
+gap:20px;
 }
 
-#profileAvatar{
-width:90px;
-height:90px;
+#avatar{
+width:110px;
+height:110px;
 border-radius:50%;
+border:3px solid white;
 }
 
-#profileNick{
-font-size:28px;
+#nick{
+font-size:40px;
 font-weight:bold;
 }
 
@@ -124,25 +83,69 @@ font-weight:bold;
 opacity:0.7;
 }
 
-#subscribeBtn{
+/* кнопка subscribe космос */
+
+#subscribe{
 margin-left:auto;
-background:white;
-color:black;
-padding:10px 20px;
-border-radius:30px;
+border:none;
+border-radius:40px;
+padding:12px 25px;
+font-size:18px;
+cursor:pointer;
+color:white;
+position:relative;
+overflow:hidden;
+background:black;
+border:2px solid white;
 }
 
-#profilePosts{
+#subscribeStars{
+position:absolute;
+top:0;
+left:0;
+width:100%;
+height:100%;
+pointer-events:none;
+}
+
+.subStar{
+position:absolute;
+width:2px;
+height:2px;
+background:white;
+border-radius:50%;
+animation:subMove linear infinite;
+}
+
+@keyframes subMove{
+from{transform:translateY(-5px)}
+to{transform:translateY(40px)}
+}
+
+#dm{
+margin-left:10px;
+background:#222;
+color:white;
+border:none;
+border-radius:40px;
+padding:12px 20px;
+cursor:pointer;
+}
+
+/* посты */
+
+#posts{
 margin-top:40px;
 display:flex;
 flex-direction:column;
-gap:20px;
+gap:30px;
 }
 
-.profilePost{
-height:120px;
+.post{
 border:2px solid white;
-border-radius:20px;
+border-radius:25px;
+padding:20px;
+min-height:120px;
 }
 
 </style>
@@ -151,83 +154,41 @@ border-radius:20px;
 
 <body>
 
-<div id="animatedText">BLADTIK SITE OFFICIAL</div>
+<div id="stars"></div>
 
-<div id="login">
+<div id="profile">
 
-<h2>Nickname</h2>
+<div id="close" onclick="closeProfile()">✖</div>
 
-<input id="nickname"><br><br>
+<div id="topProfile">
 
-<input type="file" id="avatarInput"><br><br>
-
-<button onclick="login()">Enter</button>
-
-</div>
-
-<div id="app" style="display:none">
-
-<div id="top">
-
-<img id="myavatar" class="avatar">
-
-<b id="user"></b>
-
-</div>
-
-<br>
-
-<input id="text" placeholder="Write post"><br><br>
-
-<input type="file" id="photo"><br><br>
-
-<button onclick="post()">Post</button>
-
-<div id="posts"></div>
-
-</div>
-
-<div id="profileButton">
-
-<img id="profileBtnImg">
-
-<span>My Profile</span>
-
-</div>
-
-<div id="profileDiv">
-
-<div id="closeProfile" onclick="closeProfile()">✖</div>
-
-<div id="profileTop">
-
-<img id="profileAvatar">
+<img id="avatar">
 
 <div>
 
-<div id="profileNick">Nick</div>
+<div id="nick">NICK</div>
 
-<div id="subs">Subscribers: <span id="subsCount">0</span></div>
-
-</div>
-
-<button id="subscribeBtn">Subscribe</button>
+<div id="subs">Subscribers: <span id="subCount">0</span></div>
 
 </div>
 
-<div id="profilePosts">
+<button id="subscribe">
+Subscribe
+<div id="subscribeStars"></div>
+</button>
 
-<div class="profilePost"></div>
-<div class="profilePost"></div>
+<button id="dm">💬 DM MESSAGE</button>
 
 </div>
+
+<div id="posts"></div>
 
 </div>
 
 <script type="module">
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app.js";
-import { getFirestore, collection, addDoc, onSnapshot, updateDoc, doc, getDocs } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js";
+import { getFirestore, collection, addDoc, getDocs, query, where } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js";
 
 const firebaseConfig={
 apiKey:"AIzaSyAE46",
@@ -238,143 +199,126 @@ projectId:"mysocial-dabdf"
 const app=initializeApp(firebaseConfig);
 const db=getFirestore(app);
 
-let username=localStorage.getItem("username");
-let avatar=localStorage.getItem("avatar");
-let activeProfile="";
+/* звезды фон */
 
-window.login=function(){
+for(let i=0;i<150;i++){
 
-username=document.getElementById("nickname").value;
+let star=document.createElement("div");
+star.className="star";
 
-let file=document.getElementById("avatarInput").files[0];
+star.style.left=Math.random()*100+"%";
+star.style.top=Math.random()*100+"%";
 
-let reader=new FileReader();
+star.style.animationDuration=(3+Math.random()*5)+"s";
 
-reader.onload=function(){
-
-avatar=reader.result;
-
-localStorage.setItem("username",username);
-localStorage.setItem("avatar",avatar);
-
-afterLogin();
+document.getElementById("stars").appendChild(star);
 
 }
 
-reader.readAsDataURL(file);
+/* звезды кнопки */
+
+for(let i=0;i<25;i++){
+
+let star=document.createElement("div");
+star.className="subStar";
+
+star.style.left=Math.random()*100+"%";
+star.style.animationDuration=(2+Math.random()*3)+"s";
+
+document.getElementById("subscribeStars").appendChild(star);
 
 }
 
-function afterLogin(){
+let currentUser="User1";
+let openUser="User2";
 
-document.getElementById("login").style.display="none";
-document.getElementById("app").style.display="block";
+/* открыть профиль */
 
-document.getElementById("user").innerText=username;
-document.getElementById("myavatar").src=avatar;
-document.getElementById("profileBtnImg").src=avatar;
+window.openProfile=async function(user,avatar){
 
-startRealtime();
+openUser=user;
+
+document.getElementById("profile").style.display="block";
+document.getElementById("nick").innerText=user;
+document.getElementById("avatar").src=avatar;
+
+loadPosts(user);
+loadSubs(user);
 
 }
 
-if(username && avatar){
-afterLogin();
+/* закрыть */
+
+window.closeProfile=function(){
+document.getElementById("profile").style.display="none";
 }
 
-function startRealtime(){
+/* подписка */
 
-onSnapshot(collection(db,"posts"),(snapshot)=>{
+document.getElementById("subscribe").onclick=async()=>{
 
-document.getElementById("posts").innerHTML="";
+const q=query(
+collection(db,"subs"),
+where("from","==",currentUser),
+where("to","==",openUser)
+);
 
-snapshot.forEach((docSnap)=>{
+const snap=await getDocs(q);
 
-let data=docSnap.data();
+if(!snap.empty){
+alert("Already subscribed");
+return;
+}
 
-let div=document.createElement("div");
-div.className="post";
-
-let img=data.photo?`<img class='postimg' src='${data.photo}'>`:"";
-
-div.innerHTML=`
-<img class='avatar' src='${data.avatar}' onclick='openProfile("${data.user}","${data.avatar}")'>
-<b>${data.user}</b>
-<br>
-${data.text}
-<br>
-${img}
-<br>
-<button onclick='like("${docSnap.id}",${data.like})'>👍 ${data.like}</button>
-`;
-
-document.getElementById("posts").prepend(div);
-
+await addDoc(collection(db,"subs"),{
+from:currentUser,
+to:openUser
 });
 
-});
+loadSubs(openUser);
 
 }
 
-window.post=async function(){
+/* загрузка подписчиков */
 
-let text=document.getElementById("text").value;
-
-await addDoc(collection(db,"posts"),{
-user:username,
-avatar:avatar,
-text:text,
-like:0
-});
-
-}
-
-window.like=async function(id,count){
-
-await updateDoc(doc(db,"posts",id),{
-like:count+1
-});
-
-}
-
-window.openProfile=async function(user,av){
-
-activeProfile=user;
-
-document.getElementById("profileDiv").style.display="block";
-document.getElementById("profileNick").innerText=user;
-document.getElementById("profileAvatar").src=av;
-
-const subsSnap=await getDocs(collection(db,"subs"));
+async function loadSubs(user){
 
 let count=0;
 
-subsSnap.forEach(s=>{
-if(s.data().to===user) count++;
+const snap=await getDocs(collection(db,"subs"));
+
+snap.forEach(doc=>{
+if(doc.data().to==user) count++;
 });
 
-document.getElementById("subsCount").innerText=count;
+document.getElementById("subCount").innerText=count;
 
 }
 
-window.closeProfile=function(){
+/* загрузка постов */
 
-document.getElementById("profileDiv").style.display="none";
+async function loadPosts(user){
+
+let posts=document.getElementById("posts");
+posts.innerHTML="";
+
+const snap=await getDocs(collection(db,"posts"));
+
+snap.forEach(doc=>{
+
+let d=doc.data();
+
+if(d.user==user){
+
+let div=document.createElement("div");
+div.className="post";
+div.innerText=d.text;
+
+posts.appendChild(div);
 
 }
 
-document.getElementById("subscribeBtn").onclick=async()=>{
-
-await addDoc(collection(db,"subs"),{
-from:username,
-to:activeProfile
 });
-
-}
-
-document.getElementById("profileButton").onclick=()=>{
-
-openProfile(username,avatar);
 
 }
 
