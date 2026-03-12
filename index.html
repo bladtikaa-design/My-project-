@@ -9,8 +9,8 @@
 body{
 margin:0;
 font-family:sans-serif;
-background:#f0f0f0;
 text-align:center;
+background:#f0f0f0;
 }
 
 .dark{
@@ -19,10 +19,9 @@ color:white;
 }
 
 #animatedText{
-font-size:26px;
+font-size:28px;
 font-weight:bold;
 color:#00ff00;
-margin:10px;
 animation:glow 2s infinite alternate;
 }
 
@@ -47,7 +46,7 @@ width:3px;
 height:3px;
 background:white;
 border-radius:50%;
-animation:move 6s linear infinite;
+animation:move 8s linear infinite;
 }
 
 @keyframes move{
@@ -59,10 +58,11 @@ to{transform:translateY(100vh)}
 
 .post{
 background:white;
+max-width:400px;
 margin:10px auto;
 padding:10px;
-border-radius:10px;
-max-width:400px;
+border-radius:12px;
+position:relative;
 }
 
 .dark .post{
@@ -79,15 +79,31 @@ cursor:pointer;
 .postimg{
 max-width:100%;
 border-radius:10px;
+margin-top:5px;
 }
 
 /* лайк */
 
 .like{
 border:none;
-padding:5px 10px;
+padding:6px 12px;
 border-radius:10px;
 cursor:pointer;
+}
+
+/* удалить */
+
+.deleteBtn{
+position:absolute;
+top:8px;
+right:8px;
+background:red;
+color:white;
+border:none;
+border-radius:10px;
+padding:5px 8px;
+cursor:pointer;
+font-size:16px;
 }
 
 /* liquid glass */
@@ -96,12 +112,11 @@ cursor:pointer;
 position:fixed;
 bottom:20px;
 right:20px;
-height:60px;
 width:200px;
-border-radius:50px;
+height:60px;
+border-radius:40px;
 background:rgba(255,255,255,0.15);
 backdrop-filter:blur(10px);
-border:2px solid rgba(255,255,255,0.3);
 display:flex;
 align-items:center;
 gap:10px;
@@ -132,16 +147,10 @@ overflow:auto;
 
 #close{
 position:absolute;
-right:20px;
 top:20px;
+right:20px;
 font-size:30px;
 cursor:pointer;
-}
-
-#topProfile{
-display:flex;
-align-items:center;
-gap:20px;
 }
 
 #avatar{
@@ -151,27 +160,11 @@ border-radius:50%;
 border:3px solid white;
 }
 
-#nick{
-font-size:32px;
-font-weight:bold;
-}
-
-#subscribe{
-margin-left:auto;
+#subscribe,#dm{
 border:none;
-border-radius:40px;
-padding:10px 20px;
-background:white;
-cursor:pointer;
-}
-
-#dm{
-margin-left:10px;
-border:none;
-border-radius:40px;
-padding:10px 20px;
-background:#333;
-color:white;
+padding:10px 15px;
+border-radius:20px;
+margin:5px;
 cursor:pointer;
 }
 
@@ -182,7 +175,7 @@ position:fixed;
 bottom:0;
 right:0;
 width:300px;
-height:400px;
+height:350px;
 background:white;
 display:none;
 flex-direction:column;
@@ -212,7 +205,7 @@ overflow:auto;
 
 <div id="app" style="display:none">
 
-<div id="top">
+<div>
 
 <img id="myavatar" class="avatar">
 
@@ -225,9 +218,7 @@ overflow:auto;
 <br>
 
 <input id="text" placeholder="Write post"><br><br>
-
 <input type="file" id="photo"><br><br>
-
 <button onclick="post()">Post</button>
 
 <div id="posts"></div>
@@ -235,34 +226,22 @@ overflow:auto;
 </div>
 
 <div id="profileButton">
-
 <img id="profileBtnImg">
-
 <span>MY PROFILE</span>
-
 </div>
 
 <div id="profile">
 
 <div id="close" onclick="closeProfile()">✖</div>
 
-<div id="topProfile">
-
 <img id="avatar">
 
-<div>
-
-<div id="nick"></div>
+<h2 id="nick"></h2>
 
 <div>Subscribers: <span id="subs">0</span></div>
 
-</div>
-
 <button id="subscribe">Subscribe</button>
-
 <button id="dm">💬 DM MESSAGE</button>
-
-</div>
 
 <div id="profilePosts"></div>
 
@@ -281,7 +260,8 @@ overflow:auto;
 <script type="module">
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app.js";
-import { getFirestore, collection, addDoc, onSnapshot, updateDoc, doc, getDocs, query, where } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js";
+
+import { getFirestore, collection, addDoc, onSnapshot, updateDoc, deleteDoc, doc, getDocs, query, where } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js";
 
 const firebaseConfig={
 apiKey:"AIzaSyAE46",
@@ -294,14 +274,11 @@ const db=getFirestore(app);
 
 /* космос */
 
-for(let i=0;i<100;i++){
+for(let i=0;i<120;i++){
 
 let s=document.createElement("div");
-
 s.className="star";
-
 s.style.left=Math.random()*100+"%";
-
 s.style.top=Math.random()*100+"%";
 
 document.getElementById("stars").appendChild(s);
@@ -312,8 +289,6 @@ let username=localStorage.getItem("username");
 let avatar=localStorage.getItem("avatar");
 
 if(username) start();
-
-/* логин */
 
 window.login=function(){
 
@@ -400,7 +375,7 @@ like:0
 
 }
 
-/* посты */
+/* загрузка постов */
 
 onSnapshot(collection(db,"posts"),snap=>{
 
@@ -412,11 +387,21 @@ let data=d.data();
 
 let img=data.photo?`<img class="postimg" src="${data.photo}">`:"";
 
+let del="";
+
+if(data.user==username){
+
+del=`<button class="deleteBtn" onclick="delPost('${d.id}')">🗑</button>`;
+
+}
+
 let div=document.createElement("div");
 
 div.className="post";
 
 div.innerHTML=`
+
+${del}
 
 <img class="avatar" src="${data.avatar}" onclick="openProfile('${data.user}','${data.avatar}')">
 
@@ -425,8 +410,6 @@ div.innerHTML=`
 <br>
 
 ${data.text}
-
-<br>
 
 ${img}
 
@@ -452,7 +435,19 @@ like:count+1
 
 }
 
-/* открыть профиль */
+/* удалить пост */
+
+window.delPost=async function(id){
+
+if(confirm("Delete post?")){
+
+await deleteDoc(doc(db,"posts",id));
+
+}
+
+}
+
+/* профиль */
 
 let openUser="";
 
@@ -492,11 +487,25 @@ loadSubs();
 
 }
 
-/* MY PROFILE */
-
 document.getElementById("profileButton").onclick=function(){
 
 openProfile(username,avatar);
+
+}
+
+async function loadSubs(){
+
+let snap=await getDocs(collection(db,"subs"));
+
+let count=0;
+
+snap.forEach(d=>{
+
+if(d.data().to==openUser) count++;
+
+});
+
+document.getElementById("subs").innerText=count;
 
 }
 
@@ -521,28 +530,6 @@ loadSubs();
 
 }
 
-async function loadSubs(){
-
-let snap=await getDocs(collection(db,"subs"));
-
-let count=0;
-
-snap.forEach(d=>{
-
-if(d.data().to==openUser) count++;
-
-});
-
-document.getElementById("subs").innerText=count;
-
-}
-
-window.closeProfile=function(){
-
-document.getElementById("profile").style.display="none";
-
-}
-
 /* DM */
 
 document.getElementById("dm").onclick=function(){
@@ -562,6 +549,12 @@ div.innerText=username+": "+text;
 document.getElementById("messages").append(div);
 
 document.getElementById("msg").value="";
+
+}
+
+window.closeProfile=function(){
+
+document.getElementById("profile").style.display="none";
 
 }
 
