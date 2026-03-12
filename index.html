@@ -11,15 +11,12 @@ margin:0;
 font-family:sans-serif;
 background:#f0f0f0;
 text-align:center;
-color:black;
 }
 
 .dark{
 background:#000;
 color:white;
 }
-
-/* BLADTIK текст */
 
 #animatedText{
 font-size:26px;
@@ -39,8 +36,6 @@ animation:glow 2s infinite alternate;
 
 #stars{
 position:fixed;
-top:0;
-left:0;
 width:100%;
 height:100%;
 z-index:-1;
@@ -52,31 +47,15 @@ width:3px;
 height:3px;
 background:white;
 border-radius:50%;
-animation:starMove linear infinite;
+animation:move 6s linear infinite;
 }
 
-@keyframes starMove{
+@keyframes move{
 from{transform:translateY(-10px)}
 to{transform:translateY(100vh)}
 }
 
-/* верх */
-
-#top{
-background:white;
-padding:10px;
-}
-
-.dark #top{
-background:#111;
-}
-
-.avatar{
-width:40px;
-height:40px;
-border-radius:50%;
-cursor:pointer;
-}
+/* пост */
 
 .post{
 background:white;
@@ -90,19 +69,26 @@ max-width:400px;
 background:#111;
 }
 
+.avatar{
+width:40px;
+height:40px;
+border-radius:50%;
+cursor:pointer;
+}
+
 .postimg{
 max-width:100%;
 border-radius:10px;
 }
 
-/* Liquid Glass кнопка */
+/* liquid glass */
 
 #profileButton{
 position:fixed;
 bottom:20px;
 right:20px;
 height:60px;
-width:190px;
+width:200px;
 border-radius:50px;
 background:rgba(255,255,255,0.15);
 backdrop-filter:blur(10px);
@@ -131,12 +117,12 @@ height:100%;
 background:black;
 color:white;
 display:none;
-padding:30px;
+padding:20px;
 }
 
 #close{
 position:absolute;
-right:30px;
+right:20px;
 top:20px;
 font-size:30px;
 cursor:pointer;
@@ -156,36 +142,45 @@ border:3px solid white;
 }
 
 #nick{
-font-size:35px;
+font-size:32px;
 font-weight:bold;
-}
-
-#subs{
-opacity:0.7;
 }
 
 #subscribe{
 margin-left:auto;
 border:none;
 border-radius:40px;
-padding:12px 25px;
-font-size:18px;
+padding:10px 20px;
+background:white;
 cursor:pointer;
-color:white;
-background:black;
-border:2px solid white;
-position:relative;
-overflow:hidden;
 }
 
 #dm{
 margin-left:10px;
-background:#222;
-color:white;
 border:none;
 border-radius:40px;
-padding:12px 20px;
+padding:10px 20px;
+background:#333;
+color:white;
 cursor:pointer;
+}
+
+/* чат */
+
+#chat{
+position:fixed;
+bottom:0;
+right:0;
+width:300px;
+height:400px;
+background:white;
+display:none;
+flex-direction:column;
+}
+
+#messages{
+flex:1;
+overflow:auto;
 }
 
 </style>
@@ -197,32 +192,21 @@ cursor:pointer;
 
 <div id="animatedText">BLADTIK SITE OFFICIAL</div>
 
-<div id="top">
+<input id="nickname" placeholder="Nickname"><br><br>
+<input type="file" id="avatarInput"><br><br>
+<button onclick="login()">Enter</button>
 
-<img id="myavatar" class="avatar">
-
-<b id="user"></b>
-
-<button onclick="theme()">🌙</button>
-
-</div>
-
-<br>
+<hr>
 
 <input id="text" placeholder="Write post"><br><br>
-
 <input type="file" id="photo"><br><br>
-
 <button onclick="post()">Post</button>
 
 <div id="posts"></div>
 
 <div id="profileButton">
-
 <img id="profileBtnImg">
-
 <span>MY PROFILE</span>
-
 </div>
 
 <div id="profile">
@@ -234,16 +218,13 @@ cursor:pointer;
 <img id="avatar">
 
 <div>
-
 <div id="nick"></div>
-
-<div id="subs">Subscribers: <span id="subCount">0</span></div>
-
+<div>Subscribers: <span id="subs">0</span></div>
 </div>
 
 <button id="subscribe">Subscribe</button>
 
-<button id="dm">💬 DM MESSAGE</button>
+<button id="dm">💬 DM</button>
 
 </div>
 
@@ -251,10 +232,19 @@ cursor:pointer;
 
 </div>
 
+<div id="chat">
+
+<div id="messages"></div>
+
+<input id="msg">
+<button onclick="sendMsg()">Send</button>
+
+</div>
+
 <script type="module">
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app.js";
-import { getFirestore, collection, addDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js";
+import { getFirestore, collection, addDoc, onSnapshot, getDocs } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js";
 
 const firebaseConfig={
 apiKey:"AIzaSyAE46",
@@ -265,78 +255,53 @@ projectId:"mysocial-dabdf"
 const app=initializeApp(firebaseConfig);
 const db=getFirestore(app);
 
-/* космос */
+/* звезды */
 
-for(let i=0;i<120;i++){
+for(let i=0;i<100;i++){
 
-let star=document.createElement("div");
+let s=document.createElement("div");
 
-star.className="star";
+s.className="star";
 
-star.style.left=Math.random()*100+"%";
+s.style.left=Math.random()*100+"%";
 
-star.style.top=Math.random()*100+"%";
+s.style.top=Math.random()*100+"%";
 
-star.style.animationDuration=(3+Math.random()*5)+"s";
-
-document.getElementById("stars").appendChild(star);
+document.getElementById("stars").appendChild(s);
 
 }
 
-/* логин сохраненный */
+let username="";
+let avatar="";
 
-let username=localStorage.getItem("username");
-let avatar=localStorage.getItem("avatar");
+/* логин */
 
-if(username){
+window.login=function(){
 
-document.getElementById("user").innerText=username;
-document.getElementById("myavatar").src=avatar;
+username=document.getElementById("nickname").value;
+
+let file=document.getElementById("avatarInput").files[0];
+
+let reader=new FileReader();
+
+reader.onload=function(){
+
+avatar=reader.result;
+
+localStorage.setItem("username",username);
+localStorage.setItem("avatar",avatar);
+
 document.getElementById("profileBtnImg").src=avatar;
 
 }
 
-/* тема */
-
-window.theme=function(){
-
-document.body.classList.toggle("dark");
+reader.readAsDataURL(file);
 
 }
 
-/* посты */
-
-onSnapshot(collection(db,"posts"),snap=>{
-
-document.getElementById("posts").innerHTML="";
-
-snap.forEach(doc=>{
-
-let d=doc.data();
-
-let div=document.createElement("div");
-
-div.className="post";
-
-let img=d.photo?`<img class='postimg' src='${d.photo}'>`:"";
-
-div.innerHTML=`
-<b>${d.user}</b>
-<br>
-${d.text}
-<br>
-${img}
-`;
-
-document.getElementById("posts").prepend(div);
-
-});
-
-});
-
 /* пост */
 
-window.post=async function(){
+window.post=function(){
 
 let text=document.getElementById("text").value;
 
@@ -359,19 +324,80 @@ if(file) reader.readAsDataURL(file);
 
 }
 
-document.getElementById("profileButton").onclick=()=>{
+/* загрузка постов */
+
+onSnapshot(collection(db,"posts"),snap=>{
+
+document.getElementById("posts").innerHTML="";
+
+snap.forEach(doc=>{
+
+let d=doc.data();
+
+let div=document.createElement("div");
+
+div.className="post";
+
+div.innerHTML=`
+<img class="avatar" src="${d.avatar}" onclick="openProfile('${d.user}','${d.avatar}')">
+<b>${d.user}</b>
+<br>
+${d.text}
+<br>
+<img class="postimg" src="${d.photo}">
+`;
+
+document.getElementById("posts").prepend(div);
+
+});
+
+});
+
+/* профиль */
+
+window.openProfile=async function(user,av){
 
 document.getElementById("profile").style.display="block";
 
-document.getElementById("nick").innerText=username;
+document.getElementById("nick").innerText=user;
 
-document.getElementById("avatar").src=avatar;
+document.getElementById("avatar").src=av;
+
+document.getElementById("profilePosts").innerHTML="";
+
+let snap=await getDocs(collection(db,"posts"));
+
+snap.forEach(doc=>{
+
+let d=doc.data();
+
+if(d.user==user){
+
+let div=document.createElement("div");
+
+div.className="post";
+
+div.innerHTML=`${d.text}<br><img class="postimg" src="${d.photo}">`;
+
+document.getElementById("profilePosts").append(div);
+
+}
+
+});
 
 }
 
 window.closeProfile=function(){
 
 document.getElementById("profile").style.display="none";
+
+}
+
+/* DM */
+
+document.getElementById("dm").onclick=function(){
+
+document.getElementById("chat").style.display="flex";
 
 }
 
