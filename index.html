@@ -55,11 +55,23 @@ left:50%;
 transform:translateX(-50%);
 background:rgba(0,0,0,0.7);
 color:white;
-padding:15px;
+padding:20px;
 border-radius:15px;
 backdrop-filter:blur(10px);
 max-width:300px;
 display:none;
+}
+
+#closeTags{
+position:absolute;
+top:8px;
+right:12px;
+cursor:pointer;
+font-size:18px;
+}
+
+#tagsContent{
+margin-top:10px;
 }
 
 /* космос */
@@ -237,7 +249,12 @@ color:black;
 <div id="animatedText">BLADTIK SITE OFFICIAL</div>
 
 <div id="cooldownTimer"></div>
-<div id="hashtagsBox"></div>
+
+<!-- 🔥 hashtags -->
+<div id="hashtagsBox">
+<div id="closeTags" onclick="closeHashtags()">✖</div>
+<div id="tagsContent"></div>
+</div>
 
 <div id="login">
 <input id="nickname" placeholder="Nickname"><br><br>
@@ -300,10 +317,9 @@ projectId:"mysocial-dabdf"
 const app=initializeApp(firebaseConfig);
 const db=getFirestore(app);
 
-/* переменные */
-let lastPostTime = 0;
-let cooldownInterval = null;
-let hashtags = {};
+let lastPostTime=0;
+let cooldownInterval=null;
+let hashtags={};
 
 /* космос */
 for(let i=0;i<120;i++){
@@ -346,32 +362,26 @@ document.body.classList.toggle("dark");
 
 /* таймер */
 function startCooldown(){
-let timerDiv=document.getElementById("cooldownTimer");
+let t=document.getElementById("cooldownTimer");
 clearInterval(cooldownInterval);
-
 cooldownInterval=setInterval(()=>{
 let left=20000-(Date.now()-lastPostTime);
-
 if(left<=0){
 clearInterval(cooldownInterval);
-timerDiv.style.display="none";
+t.style.display="none";
 return;
 }
-
-timerDiv.innerText="You can post again in "+Math.ceil(left/1000)+"s";
-timerDiv.style.display="block";
-
+t.innerText="You can post again in "+Math.ceil(left/1000)+"s";
+t.style.display="block";
 },200);
 }
 
 /* пост */
 window.post=function(){
-
 if(Date.now()-lastPostTime<20000){
 startCooldown();
 return;
 }
-
 lastPostTime=Date.now();
 startCooldown();
 
@@ -379,27 +389,18 @@ let text=document.getElementById("text").value;
 let file=document.getElementById("photo").files[0];
 
 if(file){
-let reader=new FileReader();
-reader.onload=async()=>{
+let r=new FileReader();
+r.onload=async()=>{
 await addDoc(collection(db,"posts"),{
-user:username,
-avatar:avatar,
-text:text,
-photo:reader.result,
-like:0
+user:username,avatar:avatar,text:text,photo:r.result,like:0
 });
 }
-reader.readAsDataURL(file);
+r.readAsDataURL(file);
 }else{
 addDoc(collection(db,"posts"),{
-user:username,
-avatar:avatar,
-text:text,
-photo:"",
-like:0
+user:username,avatar:avatar,text:text,photo:"",like:0
 });
 }
-
 }
 
 /* хештеги */
@@ -416,6 +417,8 @@ hashtags[w]=(hashtags[w]||0)+1;
 
 window.showHashtags=function(){
 let box=document.getElementById("hashtagsBox");
+let content=document.getElementById("tagsContent");
+
 box.style.display="block";
 
 let arr=[];
@@ -425,18 +428,21 @@ arr.push({tag:t,count:hashtags[t]});
 
 arr.sort((a,b)=>b.count-a.count);
 
-box.innerHTML="<b>Popular hashtags:</b><br><br>";
+content.innerHTML="<b>Popular hashtags:</b><br><br>";
 
 arr.forEach(t=>{
-box.innerHTML+=t.tag+" ("+t.count+")<br>";
+content.innerHTML+=t.tag+" ("+t.count+")<br>";
 });
 }
 
-/* загрузка постов (СОРТИРОВКА 🔥) */
+window.closeHashtags=function(){
+document.getElementById("hashtagsBox").style.display="none";
+}
+
+/* посты */
 onSnapshot(collection(db,"posts"),snap=>{
 
 let arr=[];
-
 snap.forEach(d=>{
 arr.push({id:d.id,...d.data()});
 });
@@ -476,7 +482,6 @@ updateHashtags(arr);
 
 });
 
-/* остальное */
 window.like=async(id,count)=>{
 await updateDoc(doc(db,"posts",id),{like:count+1});
 }
