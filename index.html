@@ -31,7 +31,7 @@ animation:glow 2s infinite alternate;
 100%{color:#007700;}
 }
 
-/* 💎 LIQUID TIMER */
+/* 💎 таймер */
 #cooldownTimer{
 position:fixed;
 top:20px;
@@ -45,6 +45,21 @@ color:#00ffcc;
 font-weight:bold;
 display:none;
 z-index:999;
+}
+
+/* 🔥 hashtags */
+#hashtagsBox{
+position:fixed;
+top:100px;
+left:50%;
+transform:translateX(-50%);
+background:rgba(0,0,0,0.7);
+color:white;
+padding:15px;
+border-radius:15px;
+backdrop-filter:blur(10px);
+max-width:300px;
+display:none;
 }
 
 /* космос */
@@ -120,6 +135,15 @@ border-radius:10px;
 padding:5px 8px;
 cursor:pointer;
 font-size:16px;
+}
+
+/* кнопки */
+.mainBtn{
+border:none;
+padding:10px 15px;
+border-radius:20px;
+cursor:pointer;
+margin:5px;
 }
 
 /* liquid glass */
@@ -212,34 +236,30 @@ color:black;
 
 <div id="animatedText">BLADTIK SITE OFFICIAL</div>
 
-<!-- 💎 таймер -->
 <div id="cooldownTimer"></div>
+<div id="hashtagsBox"></div>
 
 <div id="login">
-
 <input id="nickname" placeholder="Nickname"><br><br>
 <input type="file" id="avatarInput"><br><br>
 <button onclick="login()">Enter</button>
-
 </div>
 
 <div id="app" style="display:none">
 
 <div>
-
 <img id="myavatar" class="avatar">
-
 <b id="user"></b>
-
 <button onclick="theme()">🌙</button>
-
 </div>
 
 <br>
 
 <input id="text" placeholder="Write post"><br><br>
 <input type="file" id="photo"><br><br>
-<button onclick="post()">Post</button>
+
+<button class="mainBtn" onclick="post()">Post</button>
+<button class="mainBtn" onclick="showHashtags()">🔥 Popular #</button>
 
 <div id="posts"></div>
 
@@ -251,30 +271,19 @@ color:black;
 </div>
 
 <div id="profile">
-
 <div id="close" onclick="closeProfile()">✖</div>
-
 <img id="avatar">
-
 <h2 id="nick"></h2>
-
 <div>Subscribers: <span id="subs">0</span></div>
-
 <button id="subscribe">Subscribe</button>
 <button id="dm">💬 DM MESSAGE</button>
-
 <div id="profilePosts"></div>
-
 </div>
 
 <div id="chat">
-
 <div id="messages"></div>
-
 <input id="msg">
-
 <button onclick="sendMsg()">Send</button>
-
 </div>
 
 <script type="module">
@@ -291,9 +300,10 @@ projectId:"mysocial-dabdf"
 const app=initializeApp(firebaseConfig);
 const db=getFirestore(app);
 
-/* 💎 cooldown */
+/* переменные */
 let lastPostTime = 0;
 let cooldownInterval = null;
+let hashtags = {};
 
 /* космос */
 for(let i=0;i<120;i++){
@@ -330,28 +340,25 @@ document.getElementById("myavatar").src=avatar;
 document.getElementById("profileBtnImg").src=avatar;
 }
 
-/* тема */
 window.theme=function(){
 document.body.classList.toggle("dark");
 }
 
-/* 💎 ТАЙМЕР */
+/* таймер */
 function startCooldown(){
-let timerDiv = document.getElementById("cooldownTimer");
+let timerDiv=document.getElementById("cooldownTimer");
 clearInterval(cooldownInterval);
 
-cooldownInterval = setInterval(()=>{
-let now = Date.now();
-let left = 20000 - (now - lastPostTime);
+cooldownInterval=setInterval(()=>{
+let left=20000-(Date.now()-lastPostTime);
 
-if(left <= 0){
+if(left<=0){
 clearInterval(cooldownInterval);
 timerDiv.style.display="none";
 return;
 }
 
-let seconds = Math.ceil(left/1000);
-timerDiv.innerText = "You can post again in " + seconds + "s";
+timerDiv.innerText="You can post again in "+Math.ceil(left/1000)+"s";
 timerDiv.style.display="block";
 
 },200);
@@ -360,14 +367,12 @@ timerDiv.style.display="block";
 /* пост */
 window.post=function(){
 
-let now = Date.now();
-
-if(now - lastPostTime < 20000){
+if(Date.now()-lastPostTime<20000){
 startCooldown();
 return;
 }
 
-lastPostTime = now;
+lastPostTime=Date.now();
 startCooldown();
 
 let text=document.getElementById("text").value;
@@ -375,7 +380,7 @@ let file=document.getElementById("photo").files[0];
 
 if(file){
 let reader=new FileReader();
-reader.onload=async function(){
+reader.onload=async()=>{
 await addDoc(collection(db,"posts"),{
 user:username,
 avatar:avatar,
@@ -397,19 +402,61 @@ like:0
 
 }
 
-/* остальное без изменений */
+/* хештеги */
+function updateHashtags(posts){
+hashtags={};
+posts.forEach(p=>{
+p.text.split(" ").forEach(w=>{
+if(w.startsWith("#")){
+hashtags[w]=(hashtags[w]||0)+1;
+}
+});
+});
+}
 
+window.showHashtags=function(){
+let box=document.getElementById("hashtagsBox");
+box.style.display="block";
+
+let arr=[];
+for(let t in hashtags){
+arr.push({tag:t,count:hashtags[t]});
+}
+
+arr.sort((a,b)=>b.count-a.count);
+
+box.innerHTML="<b>Popular hashtags:</b><br><br>";
+
+arr.forEach(t=>{
+box.innerHTML+=t.tag+" ("+t.count+")<br>";
+});
+}
+
+/* загрузка постов (СОРТИРОВКА 🔥) */
 onSnapshot(collection(db,"posts"),snap=>{
-document.getElementById("posts").innerHTML="";
+
+let arr=[];
+
 snap.forEach(d=>{
-let data=d.data();
+arr.push({id:d.id,...d.data()});
+});
+
+arr.sort((a,b)=>b.like-a.like);
+
+document.getElementById("posts").innerHTML="";
+
+arr.forEach(data=>{
+
 let img=data.photo?`<img class="postimg" src="${data.photo}">`:"";
+
 let del="";
 if(data.user==username){
-del=`<button class="deleteBtn" onclick="delPost('${d.id}')">🗑</button>`;
+del=`<button class="deleteBtn" onclick="delPost('${data.id}')">🗑</button>`;
 }
+
 let div=document.createElement("div");
 div.className="post";
+
 div.innerHTML=`
 ${del}
 <img class="avatar" src="${data.avatar}" onclick="openProfile('${data.user}','${data.avatar}')">
@@ -418,31 +465,37 @@ ${del}
 ${data.text}
 ${img}
 <br>
-<button class="like" onclick="like('${d.id}',${data.like})">👍 ${data.like}</button>
+<button class="like" onclick="like('${data.id}',${data.like})">👍 ${data.like}</button>
 `;
-document.getElementById("posts").prepend(div);
-});
+
+document.getElementById("posts").append(div);
+
 });
 
-window.like=async function(id,count){
+updateHashtags(arr);
+
+});
+
+/* остальное */
+window.like=async(id,count)=>{
 await updateDoc(doc(db,"posts",id),{like:count+1});
 }
 
-window.delPost=async function(id){
-if(confirm("Delete post?")){
-await deleteDoc(doc(db,"posts",id));
-}
+window.delPost=async id=>{
+if(confirm("Delete post?")) await deleteDoc(doc(db,"posts",id));
 }
 
 let openUser="";
 
-window.openProfile=async function(user,av){
+window.openProfile=async(user,av)=>{
 openUser=user;
 document.getElementById("profile").style.display="block";
 document.getElementById("nick").innerText=user;
 document.getElementById("avatar").src=av;
-document.getElementById("profilePosts").innerHTML="";
+
 let snap=await getDocs(collection(db,"posts"));
+document.getElementById("profilePosts").innerHTML="";
+
 snap.forEach(p=>{
 let d=p.data();
 if(d.user==user){
@@ -452,36 +505,40 @@ div.innerHTML=`${d.text}<br><img class="postimg" src="${d.photo}">`;
 document.getElementById("profilePosts").append(div);
 }
 });
+
 loadSubs();
 }
 
-document.getElementById("profileButton").onclick=function(){
+document.getElementById("profileButton").onclick=()=>{
 openProfile(username,avatar);
 }
 
 async function loadSubs(){
 let snap=await getDocs(collection(db,"subs"));
-let count=0;
+let c=0;
 snap.forEach(d=>{
-if(d.data().to==openUser) count++;
+if(d.data().to==openUser) c++;
 });
-document.getElementById("subs").innerText=count;
+document.getElementById("subs").innerText=c;
 }
 
-document.getElementById("subscribe").onclick=async function(){
+document.getElementById("subscribe").onclick=async()=>{
 if(openUser==username) return;
+
 let q=query(collection(db,"subs"),where("from","==",username),where("to","==",openUser));
 let snap=await getDocs(q);
+
 if(!snap.empty) return alert("Already subscribed");
+
 await addDoc(collection(db,"subs"),{from:username,to:openUser});
 loadSubs();
 }
 
-document.getElementById("dm").onclick=function(){
+document.getElementById("dm").onclick=()=>{
 document.getElementById("chat").style.display="flex";
 }
 
-window.sendMsg=function(){
+window.sendMsg=()=>{
 let text=document.getElementById("msg").value;
 let div=document.createElement("div");
 div.innerText=username+": "+text;
@@ -489,7 +546,7 @@ document.getElementById("messages").append(div);
 document.getElementById("msg").value="";
 }
 
-window.closeProfile=function(){
+window.closeProfile=()=>{
 document.getElementById("profile").style.display="none";
 }
 
