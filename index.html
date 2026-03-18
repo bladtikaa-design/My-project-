@@ -5,32 +5,27 @@
 <title>BLADTIK SITE</title>
 
 <style>
-
 body{
 margin:0;
 font-family:sans-serif;
 text-align:center;
 background:#f0f0f0;
 }
-
 .dark{
 background:#000;
 color:white;
 }
-
 #animatedText{
 font-size:28px;
 font-weight:bold;
 color:#00ff00;
 animation:glow 2s infinite alternate;
 }
-
 @keyframes glow{
 0%{color:#00ff00;}
 50%{color:#55ff55;}
 100%{color:#007700;}
 }
-
 /* 💎 таймер */
 #cooldownTimer{
 position:fixed;
@@ -46,7 +41,6 @@ font-weight:bold;
 display:none;
 z-index:999;
 }
-
 /* 🔥 hashtags */
 #hashtagsBox{
 position:fixed;
@@ -61,7 +55,6 @@ backdrop-filter:blur(10px);
 max-width:300px;
 display:none;
 }
-
 #closeTags{
 position:absolute;
 top:8px;
@@ -69,20 +62,16 @@ right:12px;
 cursor:pointer;
 font-size:18px;
 }
-
 #tagsContent{
 margin-top:10px;
 }
-
 /* космос */
-
 #stars{
 position:fixed;
 width:100%;
 height:100%;
 z-index:-1;
 }
-
 .star{
 position:absolute;
 width:3px;
@@ -91,14 +80,11 @@ background:white;
 border-radius:50%;
 animation:move 8s linear infinite;
 }
-
 @keyframes move{
 from{transform:translateY(-10px)}
 to{transform:translateY(100vh)}
 }
-
 /* пост */
-
 .post{
 background:white;
 max-width:400px;
@@ -107,35 +93,28 @@ padding:10px;
 border-radius:12px;
 position:relative;
 }
-
 .dark .post{
 background:#111;
 }
-
 .avatar{
 width:40px;
 height:40px;
 border-radius:50%;
 cursor:pointer;
 }
-
 .postimg{
 max-width:100%;
 border-radius:10px;
 margin-top:5px;
 }
-
 /* лайк */
-
 .like{
 border:none;
 padding:6px 12px;
 border-radius:10px;
 cursor:pointer;
 }
-
 /* удалить */
-
 .deleteBtn{
 position:absolute;
 top:8px;
@@ -148,7 +127,6 @@ padding:5px 8px;
 cursor:pointer;
 font-size:16px;
 }
-
 /* кнопки */
 .mainBtn{
 border:none;
@@ -157,9 +135,7 @@ border-radius:20px;
 cursor:pointer;
 margin:5px;
 }
-
 /* liquid glass */
-
 #profileButton{
 position:fixed;
 bottom:20px;
@@ -175,15 +151,12 @@ gap:10px;
 padding-left:10px;
 cursor:pointer;
 }
-
 #profileButton img{
 width:45px;
 height:45px;
 border-radius:50%;
 }
-
 /* профиль */
-
 #profile{
 position:fixed;
 top:0;
@@ -196,7 +169,6 @@ display:none;
 padding:20px;
 overflow:auto;
 }
-
 #close{
 position:absolute;
 top:20px;
@@ -204,14 +176,12 @@ right:20px;
 font-size:30px;
 cursor:pointer;
 }
-
 #avatar{
 width:100px;
 height:100px;
 border-radius:50%;
 border:3px solid white;
 }
-
 #subscribe,#dm{
 border:none;
 padding:10px 15px;
@@ -219,9 +189,7 @@ border-radius:20px;
 margin:5px;
 cursor:pointer;
 }
-
 /* чат */
-
 #chat{
 position:fixed;
 bottom:0;
@@ -232,13 +200,11 @@ background:white;
 display:none;
 flex-direction:column;
 }
-
 #messages{
 flex:1;
 overflow:auto;
 color:black;
 }
-
 </style>
 </head>
 
@@ -282,9 +248,11 @@ color:black;
 
 </div>
 
+<!-- liquid glass кнопка с редактированием аватара -->
 <div id="profileButton">
 <img id="profileBtnImg">
 <span>MY PROFILE</span>
+<button onclick="editAvatar()" style="margin-left:10px;padding:5px 10px;border-radius:12px;cursor:pointer;">Edit My Avatar</button>
 </div>
 
 <div id="profile">
@@ -321,7 +289,7 @@ let lastPostTime=0;
 let cooldownInterval=null;
 let hashtags={};
 
-/* космос */
+/* 🌌 космос */
 for(let i=0;i<120;i++){
 let s=document.createElement("div");
 s.className="star";
@@ -330,8 +298,10 @@ s.style.top=Math.random()*100+"%";
 document.getElementById("stars").appendChild(s);
 }
 
+/* ⚡ данные пользователя */
 let username=localStorage.getItem("username");
 let avatar=localStorage.getItem("avatar");
+let lastAvatarChange = localStorage.getItem("lastAvatarChange"); // для редактирования аватара раз в день
 
 if(username) start();
 
@@ -360,7 +330,7 @@ window.theme=function(){
 document.body.classList.toggle("dark");
 }
 
-/* таймер */
+/* ⏱️ таймер */
 function startCooldown(){
 let t=document.getElementById("cooldownTimer");
 clearInterval(cooldownInterval);
@@ -376,7 +346,7 @@ t.style.display="block";
 },200);
 }
 
-/* пост */
+/* 📝 пост */
 window.post=function(){
 if(Date.now()-lastPostTime<20000){
 startCooldown();
@@ -403,7 +373,7 @@ user:username,avatar:avatar,text:text,photo:"",like:0
 }
 }
 
-/* хештеги */
+/* #️⃣ хештеги */
 function updateHashtags(posts){
 hashtags={};
 posts.forEach(p=>{
@@ -439,7 +409,7 @@ window.closeHashtags=function(){
 document.getElementById("hashtagsBox").style.display="none";
 }
 
-/* посты */
+/* 📌 посты */
 onSnapshot(collection(db,"posts"),snap=>{
 
 let arr=[];
@@ -518,6 +488,7 @@ document.getElementById("profileButton").onclick=()=>{
 openProfile(username,avatar);
 }
 
+/* 👥 подписки */
 async function loadSubs(){
 let snap=await getDocs(collection(db,"subs"));
 let c=0;
@@ -539,6 +510,7 @@ await addDoc(collection(db,"subs"),{from:username,to:openUser});
 loadSubs();
 }
 
+/* 💬 чат */
 document.getElementById("dm").onclick=()=>{
 document.getElementById("chat").style.display="flex";
 }
@@ -553,6 +525,35 @@ document.getElementById("msg").value="";
 
 window.closeProfile=()=>{
 document.getElementById("profile").style.display="none";
+}
+
+/* 🖼️ Edit My Avatar раз в день */
+window.editAvatar = () => {
+    let today = new Date().toDateString();
+    if (lastAvatarChange === today) {
+        alert("You can change your avatar only once per day!");
+        return;
+    }
+    let input = document.createElement("input");
+    input.type = "file";
+    input.accept = "image/*";
+    input.onchange = e => {
+        let file = e.target.files[0];
+        if (!file) return;
+        let reader = new FileReader();
+        reader.onload = () => {
+            avatar = reader.result;
+            localStorage.setItem("avatar", avatar);
+            localStorage.setItem("lastAvatarChange", today);
+            lastAvatarChange = today;
+            // обновляем все элементы с аватаркой
+            document.getElementById("myavatar").src = avatar;
+            document.getElementById("profileBtnImg").src = avatar;
+            if(document.getElementById("avatar")) document.getElementById("avatar").src = avatar;
+        }
+        reader.readAsDataURL(file);
+    }
+    input.click();
 }
 
 </script>
