@@ -5,8 +5,6 @@
 <title>BLADTIK SITE</title>
 
 <style>
-
-/* ТВОЙ CSS БЕЗ ИЗМЕНЕНИЙ */
 body{margin:0;font-family:sans-serif;text-align:center;background:#f0f0f0;}
 .dark{background:#000;color:white;}
 
@@ -22,15 +20,10 @@ flex-direction:column;
 }
 
 #messages{flex:1;overflow:auto;color:black;}
-
 </style>
 </head>
 
 <body>
-
-<!-- ВСЁ ТВОЁ -->
-<div id="stars"></div>
-<div id="animatedText">BLADTIK SITE OFFICIAL</div>
 
 <div id="login">
 <input id="nickname" placeholder="Nickname"><br><br>
@@ -40,23 +33,20 @@ flex-direction:column;
 
 <div id="app" style="display:none">
 <b id="user"></b>
-<div id="posts"></div>
 </div>
 
+<!-- ПРОФИЛЬ -->
 <div id="profile">
 <button id="inviteRoom">📞 Invite</button>
-<button id="invitePublic">🌍 Public Room</button>
 </div>
 
 <!-- ЧАТ -->
 <div id="chat">
 
-<div id="roomId" style="background:black;color:white;padding:5px;"></div>
+<div id="roomId" style="background:black;color:white;"></div>
 
-<div style="background:#111;color:white;padding:5px;">
+<div>
 <button id="closeRoom">❌ Close</button>
-<button id="makePrivate">🔒 Private</button>
-<button id="makePublic">🌍 Public</button>
 </div>
 
 <div id="messages"></div>
@@ -94,14 +84,36 @@ projectId:"mysocial-dabdf"
 
 const db=getFirestore(app);
 
-let username="";
+let username=localStorage.getItem("username")||"";
+let avatar=localStorage.getItem("avatar")||"";
+
 let currentRoom="";
 let roomOwner="";
-let roomType="private";
 
-/* логин */
+/* АВТО ВХОД */
+if(username && avatar) start();
+
+/* LOGIN FIX */
 window.login=function(){
-username=document.getElementById("nickname").value;
+let name=document.getElementById("nickname").value;
+let file=document.getElementById("avatarInput").files[0];
+
+if(!name || !file) return alert("Enter name + avatar");
+
+let reader=new FileReader();
+reader.onload=function(){
+localStorage.setItem("username",name);
+localStorage.setItem("avatar",reader.result);
+
+username=name;
+avatar=reader.result;
+
+start();
+}
+reader.readAsDataURL(file);
+}
+
+function start(){
 document.getElementById("login").style.display="none";
 document.getElementById("app").style.display="block";
 document.getElementById("user").innerText=username;
@@ -119,29 +131,18 @@ return id;
 
 /* 📞 INVITE */
 document.getElementById("inviteRoom").onclick=async()=>{
+
 let room=generateRoomId();
 
 await addDoc(collection(db,"invites"),{
 from:username,
-room:room,
-type:"private"
-});
-}
-
-/* 🌍 PUBLIC */
-document.getElementById("invitePublic").onclick=async()=>{
-let room=generateRoomId();
-
-await addDoc(collection(db,"rooms"),{
-id:room,
-owner:username,
-type:"public"
+room:room
 });
 
-openRoom(room,username,"public");
+alert("Invite sent");
 }
 
-/* 📥 LISTEN INVITE */
+/* LISTEN INVITE */
 onSnapshot(collection(db,"invites"),snap=>{
 snap.forEach(d=>{
 let data=d.data();
@@ -153,7 +154,6 @@ window.inviteId=d.id;
 
 currentRoom=data.room;
 roomOwner=data.from;
-roomType=data.type;
 }
 });
 });
@@ -162,7 +162,8 @@ roomType=data.type;
 document.getElementById("acceptInvite").onclick=async()=>{
 document.getElementById("invitePopup").style.display="none";
 await deleteDoc(doc(db,"invites",window.inviteId));
-openRoom(currentRoom,roomOwner,roomType);
+
+openRoom(currentRoom,roomOwner);
 }
 
 /* DECLINE */
@@ -171,33 +172,20 @@ document.getElementById("invitePopup").style.display="none";
 await deleteDoc(doc(db,"invites",window.inviteId));
 }
 
-/* ОТКРЫТЬ */
-function openRoom(room,owner,type){
+/* OPEN ROOM */
+function openRoom(room,owner){
 currentRoom=room;
 roomOwner=owner;
-roomType=type;
 
 document.getElementById("chat").style.display="flex";
 document.getElementById("roomId").innerText="ROOM: "+room;
 }
 
-/* CLOSE */
+/* CLOSE ROOM */
 document.getElementById("closeRoom").onclick=()=>{
-if(username!=roomOwner) return alert("Not owner");
-currentRoom="";
+if(username!=roomOwner) return alert("Only owner");
 document.getElementById("chat").style.display="none";
-}
-
-/* PRIVATE */
-document.getElementById("makePrivate").onclick=()=>{
-if(username!=roomOwner) return;
-roomType="private";
-}
-
-/* PUBLIC */
-document.getElementById("makePublic").onclick=()=>{
-if(username!=roomOwner) return;
-roomType="public";
+currentRoom="";
 }
 
 /* SEND */
