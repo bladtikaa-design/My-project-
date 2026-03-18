@@ -5,6 +5,8 @@
 <title>BLADTIK SITE</title>
 
 <style>
+
+/* ТВОЙ CSS БЕЗ ИЗМЕНЕНИЙ */
 body{margin:0;font-family:sans-serif;text-align:center;background:#f0f0f0;}
 .dark{background:#000;color:white;}
 
@@ -20,10 +22,15 @@ flex-direction:column;
 }
 
 #messages{flex:1;overflow:auto;color:black;}
+
 </style>
 </head>
 
 <body>
+
+<!-- ВСЁ ТВОЁ -->
+<div id="stars"></div>
+<div id="animatedText">BLADTIK SITE OFFICIAL</div>
 
 <div id="login">
 <input id="nickname" placeholder="Nickname"><br><br>
@@ -32,25 +39,21 @@ flex-direction:column;
 </div>
 
 <div id="app" style="display:none">
-
-<b id="user"></b><br><br>
-
-<button onclick="post()">Post</button>
-
+<b id="user"></b>
 <div id="posts"></div>
-
 </div>
 
 <div id="profile">
-<button id="inviteRoom">📞 Invite Private</button>
+<button id="inviteRoom">📞 Invite</button>
 <button id="invitePublic">🌍 Public Room</button>
 </div>
 
+<!-- ЧАТ -->
 <div id="chat">
 
-<div id="roomId" style="background:black;color:white;"></div>
+<div id="roomId" style="background:black;color:white;padding:5px;"></div>
 
-<div id="roomControls">
+<div style="background:#111;color:white;padding:5px;">
 <button id="closeRoom">❌ Close</button>
 <button id="makePrivate">🔒 Private</button>
 <button id="makePublic">🌍 Public</button>
@@ -62,7 +65,17 @@ flex-direction:column;
 
 </div>
 
-<div id="invitePopup" style="display:none;background:black;color:white;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);padding:20px;">
+<!-- POPUP -->
+<div id="invitePopup" style="
+display:none;
+position:fixed;
+top:50%;
+left:50%;
+transform:translate(-50%,-50%);
+background:black;
+color:white;
+padding:20px;
+">
 <div id="inviteText"></div>
 <button id="acceptInvite" style="color:lime;">ACCEPT</button>
 <button id="declineInvite" style="color:red;">DECLINE</button>
@@ -86,13 +99,7 @@ let currentRoom="";
 let roomOwner="";
 let roomType="private";
 
-function generateRoomId(){
-let l="ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-let id="";
-for(let i=0;i<4;i++) id+=l[Math.floor(Math.random()*l.length)];
-return id;
-}
-
+/* логин */
 window.login=function(){
 username=document.getElementById("nickname").value;
 document.getElementById("login").style.display="none";
@@ -100,25 +107,37 @@ document.getElementById("app").style.display="block";
 document.getElementById("user").innerText=username;
 }
 
-/* 📞 INVITE PRIVATE */
+/* ID */
+function generateRoomId(){
+let l="ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+let id="";
+for(let i=0;i<4;i++){
+id+=l[Math.floor(Math.random()*l.length)];
+}
+return id;
+}
+
+/* 📞 INVITE */
 document.getElementById("inviteRoom").onclick=async()=>{
 let room=generateRoomId();
+
 await addDoc(collection(db,"invites"),{
 from:username,
 room:room,
 type:"private"
 });
-alert("Invite sent");
 }
 
-/* 🌍 PUBLIC ROOM */
+/* 🌍 PUBLIC */
 document.getElementById("invitePublic").onclick=async()=>{
 let room=generateRoomId();
+
 await addDoc(collection(db,"rooms"),{
 id:room,
 owner:username,
 type:"public"
 });
+
 openRoom(room,username,"public");
 }
 
@@ -126,10 +145,12 @@ openRoom(room,username,"public");
 onSnapshot(collection(db,"invites"),snap=>{
 snap.forEach(d=>{
 let data=d.data();
+
 if(data.from!=username){
 document.getElementById("invitePopup").style.display="block";
 document.getElementById("inviteText").innerText=data.from+" invites you";
 window.inviteId=d.id;
+
 currentRoom=data.room;
 roomOwner=data.from;
 roomType=data.type;
@@ -141,7 +162,7 @@ roomType=data.type;
 document.getElementById("acceptInvite").onclick=async()=>{
 document.getElementById("invitePopup").style.display="none";
 await deleteDoc(doc(db,"invites",window.inviteId));
-openRoom(currentRoom,roomOwner,"private");
+openRoom(currentRoom,roomOwner,roomType);
 }
 
 /* DECLINE */
@@ -150,7 +171,7 @@ document.getElementById("invitePopup").style.display="none";
 await deleteDoc(doc(db,"invites",window.inviteId));
 }
 
-/* 🚪 OPEN ROOM */
+/* ОТКРЫТЬ */
 function openRoom(room,owner,type){
 currentRoom=room;
 roomOwner=owner;
@@ -160,28 +181,26 @@ document.getElementById("chat").style.display="flex";
 document.getElementById("roomId").innerText="ROOM: "+room;
 }
 
-/* ❌ CLOSE ROOM */
+/* CLOSE */
 document.getElementById("closeRoom").onclick=()=>{
 if(username!=roomOwner) return alert("Not owner");
 currentRoom="";
 document.getElementById("chat").style.display="none";
 }
 
-/* 🔒 PRIVATE */
+/* PRIVATE */
 document.getElementById("makePrivate").onclick=()=>{
 if(username!=roomOwner) return;
 roomType="private";
-alert("Room is private");
 }
 
-/* 🌍 PUBLIC */
+/* PUBLIC */
 document.getElementById("makePublic").onclick=()=>{
 if(username!=roomOwner) return;
 roomType="public";
-alert("Room is public");
 }
 
-/* 💬 SEND MSG */
+/* SEND */
 window.sendMsg=async()=>{
 let text=document.getElementById("msg").value;
 
@@ -194,11 +213,13 @@ text:text
 document.getElementById("msg").value="";
 }
 
-/* 📩 LISTEN MSG */
+/* LISTEN MSG */
 onSnapshot(collection(db,"messages"),snap=>{
 document.getElementById("messages").innerHTML="";
+
 snap.forEach(d=>{
 let data=d.data();
+
 if(data.room==currentRoom){
 let div=document.createElement("div");
 div.innerText=data.user+": "+data.text;
