@@ -5,222 +5,8 @@
 <title>BLADTIK SITE</title>
 
 <style>
-
-body{
-margin:0;
-font-family:sans-serif;
-text-align:center;
-background:#f0f0f0;
-}
-
-.dark{
-background:#000;
-color:white;
-}
-
-#animatedText{
-font-size:28px;
-font-weight:bold;
-color:#00ff00;
-animation:glow 2s infinite alternate;
-}
-
-@keyframes glow{
-0%{color:#00ff00;}
-50%{color:#55ff55;}
-100%{color:#007700;}
-}
-
-/* 💎 таймер */
-#cooldownTimer{
-position:fixed;
-top:20px;
-left:50%;
-transform:translateX(-50%);
-padding:12px 25px;
-border-radius:30px;
-background:rgba(255,255,255,0.15);
-backdrop-filter:blur(12px);
-color:#00ffcc;
-font-weight:bold;
-display:none;
-z-index:999;
-}
-
-/* 🔥 hashtags */
-#hashtagsBox{
-position:fixed;
-top:100px;
-left:50%;
-transform:translateX(-50%);
-background:rgba(0,0,0,0.7);
-color:white;
-padding:20px;
-border-radius:15px;
-backdrop-filter:blur(10px);
-max-width:300px;
-display:none;
-}
-
-#closeTags{
-position:absolute;
-top:8px;
-right:12px;
-cursor:pointer;
-font-size:18px;
-}
-
-#tagsContent{
-margin-top:10px;
-}
-
-/* космос */
-
-#stars{
-position:fixed;
-width:100%;
-height:100%;
-z-index:-1;
-}
-
-.star{
-position:absolute;
-width:3px;
-height:3px;
-background:white;
-border-radius:50%;
-animation:move 8s linear infinite;
-}
-
-@keyframes move{
-from{transform:translateY(-10px)}
-to{transform:translateY(100vh)}
-}
-
-/* пост */
-
-.post{
-background:white;
-max-width:400px;
-margin:10px auto;
-padding:10px;
-border-radius:12px;
-position:relative;
-}
-
-.dark .post{
-background:#111;
-}
-
-.avatar{
-width:40px;
-height:40px;
-border-radius:50%;
-cursor:pointer;
-}
-
-.postimg{
-max-width:100%;
-border-radius:10px;
-margin-top:5px;
-}
-
-/* лайк */
-
-.like{
-border:none;
-padding:6px 12px;
-border-radius:10px;
-cursor:pointer;
-}
-
-/* удалить */
-
-.deleteBtn{
-position:absolute;
-top:8px;
-right:8px;
-background:red;
-color:white;
-border:none;
-border-radius:10px;
-padding:5px 8px;
-cursor:pointer;
-font-size:16px;
-}
-
-/* кнопки */
-.mainBtn{
-border:none;
-padding:10px 15px;
-border-radius:20px;
-cursor:pointer;
-margin:5px;
-}
-
-/* liquid glass */
-
-#profileButton{
-position:fixed;
-bottom:20px;
-right:20px;
-width:200px;
-height:60px;
-border-radius:40px;
-background:rgba(255,255,255,0.15);
-backdrop-filter:blur(10px);
-display:flex;
-align-items:center;
-gap:10px;
-padding-left:10px;
-cursor:pointer;
-}
-
-#profileButton img{
-width:45px;
-height:45px;
-border-radius:50%;
-}
-
-/* профиль */
-
-#profile{
-position:fixed;
-top:0;
-left:0;
-width:100%;
-height:100%;
-background:black;
-color:white;
-display:none;
-padding:20px;
-overflow:auto;
-}
-
-#close{
-position:absolute;
-top:20px;
-right:20px;
-font-size:30px;
-cursor:pointer;
-}
-
-#avatar{
-width:100px;
-height:100px;
-border-radius:50%;
-border:3px solid white;
-}
-
-#subscribe,#dm{
-border:none;
-padding:10px 15px;
-border-radius:20px;
-margin:5px;
-cursor:pointer;
-}
-
-/* чат */
+body{margin:0;font-family:sans-serif;text-align:center;background:#f0f0f0;}
+.dark{background:#000;color:white;}
 
 #chat{
 position:fixed;
@@ -233,28 +19,11 @@ display:none;
 flex-direction:column;
 }
 
-#messages{
-flex:1;
-overflow:auto;
-color:black;
-}
-
+#messages{flex:1;overflow:auto;color:black;}
 </style>
 </head>
 
 <body>
-
-<div id="stars"></div>
-
-<div id="animatedText">BLADTIK SITE OFFICIAL</div>
-
-<div id="cooldownTimer"></div>
-
-<!-- 🔥 hashtags -->
-<div id="hashtagsBox">
-<div id="closeTags" onclick="closeHashtags()">✖</div>
-<div id="tagsContent"></div>
-</div>
 
 <div id="login">
 <input id="nickname" placeholder="Nickname"><br><br>
@@ -264,296 +33,179 @@ color:black;
 
 <div id="app" style="display:none">
 
-<div>
-<img id="myavatar" class="avatar">
-<b id="user"></b>
-<button onclick="theme()">🌙</button>
-</div>
+<b id="user"></b><br><br>
 
-<br>
-
-<input id="text" placeholder="Write post"><br><br>
-<input type="file" id="photo"><br><br>
-
-<button class="mainBtn" onclick="post()">Post</button>
-<button class="mainBtn" onclick="showHashtags()">🔥 Popular #</button>
+<button onclick="post()">Post</button>
 
 <div id="posts"></div>
 
 </div>
 
-<div id="profileButton">
-<img id="profileBtnImg">
-<span>MY PROFILE</span>
-</div>
-
 <div id="profile">
-<div id="close" onclick="closeProfile()">✖</div>
-<img id="avatar">
-<h2 id="nick"></h2>
-<div>Subscribers: <span id="subs">0</span></div>
-<button id="subscribe">Subscribe</button>
-<button id="dm">💬 DM MESSAGE</button>
-<div id="profilePosts"></div>
+<button id="inviteRoom">📞 Invite Private</button>
+<button id="invitePublic">🌍 Public Room</button>
 </div>
 
 <div id="chat">
+
+<div id="roomId" style="background:black;color:white;"></div>
+
+<div id="roomControls">
+<button id="closeRoom">❌ Close</button>
+<button id="makePrivate">🔒 Private</button>
+<button id="makePublic">🌍 Public</button>
+</div>
+
 <div id="messages"></div>
 <input id="msg">
 <button onclick="sendMsg()">Send</button>
+
+</div>
+
+<div id="invitePopup" style="display:none;background:black;color:white;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);padding:20px;">
+<div id="inviteText"></div>
+<button id="acceptInvite" style="color:lime;">ACCEPT</button>
+<button id="declineInvite" style="color:red;">DECLINE</button>
 </div>
 
 <script type="module">
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app.js";
-import { getFirestore, collection, addDoc, onSnapshot, updateDoc, deleteDoc, doc, getDocs, query, where } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js";
+import { getFirestore, collection, addDoc, onSnapshot, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js";
 
-const firebaseConfig={
+const app=initializeApp({
 apiKey:"AIzaSyAE46",
 authDomain:"mysocial-dabdf.firebaseapp.com",
 projectId:"mysocial-dabdf"
-};
+});
 
-const app=initializeApp(firebaseConfig);
 const db=getFirestore(app);
 
-let lastPostTime=0;
-let cooldownInterval=null;
-let hashtags={};
+let username="";
+let currentRoom="";
+let roomOwner="";
+let roomType="private";
 
-/* космос */
-for(let i=0;i<120;i++){
-let s=document.createElement("div");
-s.className="star";
-s.style.left=Math.random()*100+"%";
-s.style.top=Math.random()*100+"%";
-document.getElementById("stars").appendChild(s);
+function generateRoomId(){
+let l="ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+let id="";
+for(let i=0;i<4;i++) id+=l[Math.floor(Math.random()*l.length)];
+return id;
 }
-
-let username=localStorage.getItem("username");
-let avatar=localStorage.getItem("avatar");
-
-if(username) start();
 
 window.login=function(){
 username=document.getElementById("nickname").value;
-let file=document.getElementById("avatarInput").files[0];
-let reader=new FileReader();
-reader.onload=function(){
-avatar=reader.result;
-localStorage.setItem("username",username);
-localStorage.setItem("avatar",avatar);
-start();
-}
-reader.readAsDataURL(file);
-}
-
-function start(){
 document.getElementById("login").style.display="none";
 document.getElementById("app").style.display="block";
 document.getElementById("user").innerText=username;
-document.getElementById("myavatar").src=avatar;
-document.getElementById("profileBtnImg").src=avatar;
 }
 
-window.theme=function(){
-document.body.classList.toggle("dark");
-}
-
-/* таймер */
-function startCooldown(){
-let t=document.getElementById("cooldownTimer");
-clearInterval(cooldownInterval);
-cooldownInterval=setInterval(()=>{
-let left=20000-(Date.now()-lastPostTime);
-if(left<=0){
-clearInterval(cooldownInterval);
-t.style.display="none";
-return;
-}
-t.innerText="You can post again in "+Math.ceil(left/1000)+"s";
-t.style.display="block";
-},200);
-}
-
-/* пост */
-window.post=function(){
-if(Date.now()-lastPostTime<20000){
-startCooldown();
-return;
-}
-lastPostTime=Date.now();
-startCooldown();
-
-let text=document.getElementById("text").value;
-let file=document.getElementById("photo").files[0];
-
-if(file){
-let r=new FileReader();
-r.onload=async()=>{
-await addDoc(collection(db,"posts"),{
-user:username,avatar:avatar,text:text,photo:r.result,like:0
+/* 📞 INVITE PRIVATE */
+document.getElementById("inviteRoom").onclick=async()=>{
+let room=generateRoomId();
+await addDoc(collection(db,"invites"),{
+from:username,
+room:room,
+type:"private"
 });
+alert("Invite sent");
 }
-r.readAsDataURL(file);
-}else{
-addDoc(collection(db,"posts"),{
-user:username,avatar:avatar,text:text,photo:"",like:0
+
+/* 🌍 PUBLIC ROOM */
+document.getElementById("invitePublic").onclick=async()=>{
+let room=generateRoomId();
+await addDoc(collection(db,"rooms"),{
+id:room,
+owner:username,
+type:"public"
 });
-}
-}
-
-/* хештеги */
-function updateHashtags(posts){
-hashtags={};
-posts.forEach(p=>{
-p.text.split(" ").forEach(w=>{
-if(w.startsWith("#")){
-hashtags[w]=(hashtags[w]||0)+1;
-}
-});
-});
+openRoom(room,username,"public");
 }
 
-window.showHashtags=function(){
-let box=document.getElementById("hashtagsBox");
-let content=document.getElementById("tagsContent");
-
-box.style.display="block";
-
-let arr=[];
-for(let t in hashtags){
-arr.push({tag:t,count:hashtags[t]});
-}
-
-arr.sort((a,b)=>b.count-a.count);
-
-content.innerHTML="<b>Popular hashtags:</b><br><br>";
-
-arr.forEach(t=>{
-content.innerHTML+=t.tag+" ("+t.count+")<br>";
-});
-}
-
-window.closeHashtags=function(){
-document.getElementById("hashtagsBox").style.display="none";
-}
-
-/* посты */
-onSnapshot(collection(db,"posts"),snap=>{
-
-let arr=[];
+/* 📥 LISTEN INVITE */
+onSnapshot(collection(db,"invites"),snap=>{
 snap.forEach(d=>{
-arr.push({id:d.id,...d.data()});
-});
-
-arr.sort((a,b)=>b.like-a.like);
-
-document.getElementById("posts").innerHTML="";
-
-arr.forEach(data=>{
-
-let img=data.photo?`<img class="postimg" src="${data.photo}">`:"";
-
-let del="";
-if(data.user==username){
-del=`<button class="deleteBtn" onclick="delPost('${data.id}')">🗑</button>`;
-}
-
-let div=document.createElement("div");
-div.className="post";
-
-div.innerHTML=`
-${del}
-<img class="avatar" src="${data.avatar}" onclick="openProfile('${data.user}','${data.avatar}')">
-<b>${data.user}</b>
-<br>
-${data.text}
-${img}
-<br>
-<button class="like" onclick="like('${data.id}',${data.like})">👍 ${data.like}</button>
-`;
-
-document.getElementById("posts").append(div);
-
-});
-
-updateHashtags(arr);
-
-});
-
-window.like=async(id,count)=>{
-await updateDoc(doc(db,"posts",id),{like:count+1});
-}
-
-window.delPost=async id=>{
-if(confirm("Delete post?")) await deleteDoc(doc(db,"posts",id));
-}
-
-let openUser="";
-
-window.openProfile=async(user,av)=>{
-openUser=user;
-document.getElementById("profile").style.display="block";
-document.getElementById("nick").innerText=user;
-document.getElementById("avatar").src=av;
-
-let snap=await getDocs(collection(db,"posts"));
-document.getElementById("profilePosts").innerHTML="";
-
-snap.forEach(p=>{
-let d=p.data();
-if(d.user==user){
-let div=document.createElement("div");
-div.className="post";
-div.innerHTML=`${d.text}<br><img class="postimg" src="${d.photo}">`;
-document.getElementById("profilePosts").append(div);
+let data=d.data();
+if(data.from!=username){
+document.getElementById("invitePopup").style.display="block";
+document.getElementById("inviteText").innerText=data.from+" invites you";
+window.inviteId=d.id;
+currentRoom=data.room;
+roomOwner=data.from;
+roomType=data.type;
 }
 });
-
-loadSubs();
-}
-
-document.getElementById("profileButton").onclick=()=>{
-openProfile(username,avatar);
-}
-
-async function loadSubs(){
-let snap=await getDocs(collection(db,"subs"));
-let c=0;
-snap.forEach(d=>{
-if(d.data().to==openUser) c++;
 });
-document.getElementById("subs").innerText=c;
+
+/* ACCEPT */
+document.getElementById("acceptInvite").onclick=async()=>{
+document.getElementById("invitePopup").style.display="none";
+await deleteDoc(doc(db,"invites",window.inviteId));
+openRoom(currentRoom,roomOwner,"private");
 }
 
-document.getElementById("subscribe").onclick=async()=>{
-if(openUser==username) return;
-
-let q=query(collection(db,"subs"),where("from","==",username),where("to","==",openUser));
-let snap=await getDocs(q);
-
-if(!snap.empty) return alert("Already subscribed");
-
-await addDoc(collection(db,"subs"),{from:username,to:openUser});
-loadSubs();
+/* DECLINE */
+document.getElementById("declineInvite").onclick=async()=>{
+document.getElementById("invitePopup").style.display="none";
+await deleteDoc(doc(db,"invites",window.inviteId));
 }
 
-document.getElementById("dm").onclick=()=>{
+/* 🚪 OPEN ROOM */
+function openRoom(room,owner,type){
+currentRoom=room;
+roomOwner=owner;
+roomType=type;
+
 document.getElementById("chat").style.display="flex";
+document.getElementById("roomId").innerText="ROOM: "+room;
 }
 
-window.sendMsg=()=>{
+/* ❌ CLOSE ROOM */
+document.getElementById("closeRoom").onclick=()=>{
+if(username!=roomOwner) return alert("Not owner");
+currentRoom="";
+document.getElementById("chat").style.display="none";
+}
+
+/* 🔒 PRIVATE */
+document.getElementById("makePrivate").onclick=()=>{
+if(username!=roomOwner) return;
+roomType="private";
+alert("Room is private");
+}
+
+/* 🌍 PUBLIC */
+document.getElementById("makePublic").onclick=()=>{
+if(username!=roomOwner) return;
+roomType="public";
+alert("Room is public");
+}
+
+/* 💬 SEND MSG */
+window.sendMsg=async()=>{
 let text=document.getElementById("msg").value;
-let div=document.createElement("div");
-div.innerText=username+": "+text;
-document.getElementById("messages").append(div);
+
+await addDoc(collection(db,"messages"),{
+room:currentRoom,
+user:username,
+text:text
+});
+
 document.getElementById("msg").value="";
 }
 
-window.closeProfile=()=>{
-document.getElementById("profile").style.display="none";
+/* 📩 LISTEN MSG */
+onSnapshot(collection(db,"messages"),snap=>{
+document.getElementById("messages").innerHTML="";
+snap.forEach(d=>{
+let data=d.data();
+if(data.room==currentRoom){
+let div=document.createElement("div");
+div.innerText=data.user+": "+data.text;
+document.getElementById("messages").append(div);
 }
+});
+});
 
 </script>
 
