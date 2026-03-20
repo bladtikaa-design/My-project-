@@ -40,11 +40,10 @@ margin-top:10px;
 max-height:250px;
 overflow:auto;
 color:white;
-font-size:14px;
 text-align:left;
 }
 .searchItem{
-padding:5px;
+padding:6px;
 cursor:pointer;
 border-bottom:1px solid rgba(255,255,255,0.2);
 }
@@ -52,7 +51,12 @@ border-bottom:1px solid rgba(255,255,255,0.2);
 background:rgba(255,255,255,0.1);
 }
 
-/* остальной твой CSS БЕЗ ИЗМЕНЕНИЙ */
+/* подсветка найденного поста */
+.highlight{
+outline:3px solid yellow;
+}
+
+/* дальше ВСЁ ТВОЁ */
 #animatedText{
 font-size:28px;
 font-weight:bold;
@@ -65,6 +69,7 @@ animation:glow 2s infinite alternate;
 100%{color:#007700;}
 }
 
+/* (я НЕ трогал остальной CSS) */
 .post{
 background:white;
 max-width:400px;
@@ -87,7 +92,7 @@ position:relative;
 <div id="searchResults"></div>
 </div>
 
-<!-- дальше ВСЁ твое -->
+<!-- ТВОЙ САЙТ -->
 <div id="animatedText">BLADTIK SITE OFFICIAL</div>
 
 <div id="login">
@@ -118,7 +123,7 @@ position:relative;
 <script type="module">
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app.js";
-import { getFirestore, collection, addDoc, onSnapshot, getDocs } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js";
+import { getFirestore, collection, addDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js";
 
 const app=initializeApp({
 apiKey:"AIzaSyAE46",
@@ -167,26 +172,36 @@ text:text
 });
 }
 
-/* 📦 КЭШ постов для поиска */
+/* 📦 кеш постов */
 let allPosts=[];
+let postElements={};
 
+/* 📌 загрузка постов */
 onSnapshot(collection(db,"posts"),snap=>{
 allPosts=[];
+postElements={};
+
 document.getElementById("posts").innerHTML="";
 
 snap.forEach(d=>{
 let data=d.data();
-allPosts.push(data);
+let id=d.id;
+
+allPosts.push({id,...data});
 
 let div=document.createElement("div");
 div.className="post";
+
 div.innerHTML=`
-<img class="avatar" src="${data.avatar}">
+<img class="avatar" src="${data.avatar}" onclick="openProfile('${data.user}','${data.avatar}')">
 <b>${data.user}</b><br>
 ${data.text}
 `;
 
 document.getElementById("posts").append(div);
+
+/* сохраняем ссылку на DOM */
+postElements[id]=div;
 });
 });
 
@@ -203,7 +218,7 @@ return;
 
 res.innerHTML="";
 
-/* 👤 поиск профилей */
+/* 👤 профили */
 let users={};
 
 allPosts.forEach(p=>{
@@ -220,19 +235,32 @@ div.onclick=()=>openProfile(u,users[u]);
 res.append(div);
 }
 
-/* 📌 поиск постов */
+/* 📌 посты */
 allPosts.forEach(p=>{
 if(p.text.toLowerCase().includes(val)){
 let div=document.createElement("div");
 div.className="searchItem";
 div.innerHTML="📌 "+p.user+": "+p.text;
+
+/* 🔥 клик → прокрутка */
+div.onclick=()=>{
+let el=postElements[p.id];
+if(el){
+el.scrollIntoView({behavior:"smooth"});
+
+/* подсветка */
+el.classList.add("highlight");
+setTimeout(()=>el.classList.remove("highlight"),2000);
+}
+};
+
 res.append(div);
 }
 });
 
 }
 
-/* ПРОСТО чтобы не ломать если нет */
+/* чтобы не ломалось */
 window.openProfile=function(u,a){
 alert("Profile: "+u);
 }
