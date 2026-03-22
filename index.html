@@ -7,38 +7,53 @@
 <style>
 body{margin:0;font-family:sans-serif;text-align:center;background:#f0f0f0;}
 .dark{background:#000;color:white;}
-
 #animatedText{font-size:28px;font-weight:bold;color:#00ff00;animation:glow 2s infinite alternate;}
 @keyframes glow{0%{color:#00ff00;}50%{color:#55ff55;}100%{color:#007700;}}
-
-/* Таймер */
 #cooldownTimer{position:fixed;top:20px;left:50%;transform:translateX(-50%);padding:12px 25px;border-radius:30px;background:rgba(255,255,255,0.15);backdrop-filter:blur(12px);color:#00ffcc;font-weight:bold;display:none;z-index:999;}
-
-/* Radar/Shake */
-#radarBox{position:fixed;top:20px;left:50%;transform:translateX(-50%);padding:15px 30px;border-radius:30px;background:rgba(255,255,255,0.15);backdrop-filter:blur(15px);color:#00ffcc;font-weight:bold;display:none;z-index:9999;animation:fadeIn 0.5s;}
-@keyframes fadeIn{from{opacity:0;transform:translateX(-50%) scale(0.8);}to{opacity:1;transform:translateX(-50%) scale(1);}}
-
-/* Компас-стрелка */
-#compassArrow{position:fixed;top:50%;left:50%;width:50px;height:50px;transform-origin:center center;display:none;z-index:9999;}
-
-/* Chat */
+#hashtagsBox{position:fixed;top:100px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,0.7);color:white;padding:20px;border-radius:15px;backdrop-filter:blur(10px);max-width:300px;display:none;}
+#closeTags{position:absolute;top:8px;right:12px;cursor:pointer;font-size:18px;}
+#tagsContent{margin-top:10px;}
+#stars{position:fixed;width:100%;height:100%;z-index:-1;}
+.star{position:absolute;width:3px;height:3px;background:white;border-radius:50%;animation:move 8s linear infinite;}
+@keyframes move{from{transform:translateY(-10px)}to{transform:translateY(100vh)}}
+.post{background:white;max-width:400px;margin:10px auto;padding:10px;border-radius:12px;position:relative;}
+.dark .post{background:#111;}
+.avatar{width:40px;height:40px;border-radius:50%;cursor:pointer;}
+.postimg{max-width:100%;border-radius:10px;margin-top:5px;}
+.like{border:none;padding:6px 12px;border-radius:10px;cursor:pointer;}
+.deleteBtn{position:absolute;top:8px;right:8px;background:red;color:white;border:none;border-radius:10px;padding:5px 8px;cursor:pointer;font-size:16px;}
+.mainBtn{border:none;padding:10px 15px;border-radius:20px;cursor:pointer;margin:5px;}
+#profileButton{position:fixed;bottom:20px;right:20px;width:200px;height:60px;border-radius:40px;background:rgba(255,255,255,0.15);backdrop-filter:blur(10px);display:flex;align-items:center;gap:10px;padding-left:10px;cursor:pointer;}
+#profileButton img{width:45px;height:45px;border-radius:50%;}
+#profile{position:fixed;top:0;left:0;width:100%;height:100%;background:black;color:white;display:none;padding:20px;overflow:auto;}
+#close{position:absolute;top:20px;right:20px;font-size:30px;cursor:pointer;}
+#avatar{width:100px;height:100px;border-radius:50%;border:3px solid white;}
+#subscribe,#dm{border:none;padding:10px 15px;border-radius:20px;margin:5px;cursor:pointer;}
 #chat{position:fixed;bottom:0;right:0;width:300px;height:350px;background:white;display:none;flex-direction:column;}
 #messages{flex:1;overflow:auto;color:black;}
+#loadingScreen{position:fixed;top:0;left:0;width:100%;height:100%;background:black;color:white;display:flex;flex-direction:column;justify-content:center;align-items:center;z-index:1000;}
+#loaderDots{display:flex;gap:15px;margin-bottom:20px;}
+.dot{width:15px;height:15px;background:white;border-radius:50%;animation:dotMove 1.5s infinite ease-in-out;}
+.dot:nth-child(2){ animation-delay:0.3s; }
+.dot:nth-child(3){ animation-delay:0.6s; }
+@keyframes dotMove{0%, 80%, 100% { transform: scale(0); } 40% { transform: scale(1); }}
+#loadingText{font-size:20px;font-weight:bold;color:#fff;}
 
-/* Nearby people */
+/* Radar / Nearby People */
+#radarBox{position:fixed;top:20px;left:50%;transform:translateX(-50%);padding:12px 20px;border-radius:30px;background:rgba(255,255,255,0.2);backdrop-filter:blur(15px);color:#00ffcc;font-weight:bold;display:none;z-index:9999;}
 #nearbyBox{position:fixed;bottom:0;left:0;width:100%;max-height:200px;background:rgba(0,0,0,0.8);color:white;overflow:auto;display:none;padding:10px;}
 #nearbyBox button{margin:5px;padding:5px 10px;border-radius:10px;border:none;cursor:pointer;}
+#compassArrow{position:fixed;top:50%;left:50%;width:50px;height:50px;transform-origin:center center;display:none;z-index:9999;}
 </style>
 </head>
 <body>
 
+<!-- Loading Screen -->
 <div id="loadingScreen">
-  <div style="display:flex;gap:10px;">
-    <div class="dot" style="width:15px;height:15px;background:white;border-radius:50%;animation:dotMove 1.5s infinite ease-in-out;"></div>
-    <div class="dot" style="width:15px;height:15px;background:white;border-radius:50%;animation:dotMove 1.5s infinite ease-in-out 0.3s;"></div>
-    <div class="dot" style="width:15px;height:15px;background:white;border-radius:50%;animation:dotMove 1.5s infinite ease-in-out 0.6s;"></div>
+  <div id="loaderDots">
+    <div class="dot"></div><div class="dot"></div><div class="dot"></div>
   </div>
-  <div>Loading...</div>
+  <div id="loadingText">Loading... wait 5 seconds</div>
 </div>
 
 <div id="stars"></div>
@@ -53,21 +68,34 @@ body{margin:0;font-family:sans-serif;text-align:center;background:#f0f0f0;}
 </div>
 
 <div id="app" style="display:none">
-<button onclick="enableMotion()">📳 Enable Shake</button>
-<button onclick="toggleNearby()">👥 People nearby</button>
-<img id="myavatar" style="width:40px;border-radius:50%">
+<div>
+<img id="myavatar" class="avatar">
 <b id="user"></b>
-
-<br><br>
+<button onclick="theme()">🌙</button>
+</div>
+<br>
 <input id="text" placeholder="Write post"><br><br>
 <input type="file" id="photo"><br><br>
-<button onclick="post()">Post</button>
+<button class="mainBtn" onclick="post()">Post</button>
+<button class="mainBtn" onclick="showHashtags()">🔥 Popular #</button>
 <div id="posts"></div>
 </div>
 
-<div id="nearbyBox">
-<b>👥 People nearby:</b>
-<div id="nearbyList"></div>
+<!-- liquid glass кнопка -->
+<div id="profileButton">
+<img id="profileBtnImg">
+<span>MY PROFILE</span>
+<button onclick="editAvatar()" style="margin-left:10px;padding:5px 10px;border-radius:12px;cursor:pointer;">Edit My Avatar</button>
+</div>
+
+<div id="profile">
+<div id="close" onclick="closeProfile()">✖</div>
+<img id="avatar">
+<h2 id="nick"></h2>
+<div>Subscribers: <span id="subs">0</span></div>
+<button id="subscribe">Subscribe</button>
+<button id="dm">💬 DM MESSAGE</button>
+<div id="profilePosts"></div>
 </div>
 
 <div id="chat">
@@ -76,34 +104,42 @@ body{margin:0;font-family:sans-serif;text-align:center;background:#f0f0f0;}
 <button onclick="sendMsg()">Send</button>
 </div>
 
-<!-- Стрелка компаса -->
+<div id="nearbyBox">
+<b>👥 People nearby:</b>
+<div id="nearbyList"></div>
+</div>
+
 <img id="compassArrow" src="https://cdn-icons-png.flaticon.com/512/60/60580.png">
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app.js";
-import { getFirestore, collection, addDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js";
+import { getFirestore, collection, addDoc, onSnapshot, updateDoc, deleteDoc, doc, getDocs, query, where } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js";
 
-const app=initializeApp({
-apiKey:"AIzaSyAE46",
-authDomain:"mysocial-dabdf.firebaseapp.com",
-projectId:"mysocial-dabdf"
-});
+const firebaseConfig={apiKey:"AIzaSyAE46",authDomain:"mysocial-dabdf.firebaseapp.com",projectId:"mysocial-dabdf"};
+const app=initializeApp(firebaseConfig);
 const db=getFirestore(app);
 
-let username,avatar,myPos=null,currentChat=null;
+let lastPostTime=0,cooldownInterval=null,hashtags={};
+let username=localStorage.getItem("username"),avatar=localStorage.getItem("avatar");
+let lastAvatarChange = localStorage.getItem("lastAvatarChange");
+let myPos=null,openUser="",currentChat=null;
 
-/* Старый код login */
+/* 🌌 Космос */
+for(let i=0;i<120;i++){
+let s=document.createElement("div");s.className="star";
+s.style.left=Math.random()*100+"%";
+s.style.top=Math.random()*100+"%";
+document.getElementById("stars").appendChild(s);
+}
+
+if(username) start();
+
 window.login=function(){
 username=document.getElementById("nickname").value;
 let file=document.getElementById("avatarInput").files[0];
-let r=new FileReader();
-r.onload=()=>{
-avatar=r.result;
-localStorage.setItem("username",username);
-localStorage.setItem("avatar",avatar);
-start();
-}
-r.readAsDataURL(file);
+let reader=new FileReader();
+reader.onload=function(){avatar=reader.result;localStorage.setItem("username",username);localStorage.setItem("avatar",avatar);start();}
+reader.readAsDataURL(file);
 }
 
 function start(){
@@ -111,119 +147,75 @@ document.getElementById("login").style.display="none";
 document.getElementById("app").style.display="block";
 document.getElementById("user").innerText=username;
 document.getElementById("myavatar").src=avatar;
+document.getElementById("profileBtnImg").src=avatar;
 
-/* GPS */
-navigator.geolocation.watchPosition(pos=>{
-myPos={lat:pos.coords.latitude,lon:pos.coords.longitude};
-addDoc(collection(db,"geo"),{user:username,lat:myPos.lat,lon:myPos.lon,time:Date.now()});
-});
+/* GPS отслеживание */
+if(navigator.geolocation){
+navigator.geolocation.watchPosition(pos=>{myPos={lat:pos.coords.latitude,lon:pos.coords.longitude};
+addDoc(collection(db,"geo"),{user:username,lat:myPos.lat,lon:myPos.lon,time:Date.now()});});
 }
+}
+
+window.theme=function(){document.body.classList.toggle("dark");}
+function startCooldown(){let t=document.getElementById("cooldownTimer");clearInterval(cooldownInterval);cooldownInterval=setInterval(()=>{let left=20000-(Date.now()-lastPostTime);if(left<=0){clearInterval(cooldownInterval);t.style.display="none";return;}t.innerText="You can post again in "+Math.ceil(left/1000)+"s";t.style.display="block";},200);}
 
 /* Пост */
 window.post=function(){
-let text=document.getElementById("text").value;
-let file=document.getElementById("photo").files[0];
-if(file){
-let r=new FileReader();
-r.onload=()=>{ addDoc(collection(db,"posts"),{user,avatar,text,photo:r.result,like:0}); }
-r.readAsDataURL(file);
-}else addDoc(collection(db,"posts"),{user,avatar,text,photo:"",like:0});
+if(Date.now()-lastPostTime<20000){startCooldown();return;}
+lastPostTime=Date.now();startCooldown();
+let text=document.getElementById("text").value;let file=document.getElementById("photo").files[0];
+if(file){let r=new FileReader();r.onload=async()=>{await addDoc(collection(db,"posts"),{user:username,avatar:avatar,text:text,photo:r.result,like:0});}r.readAsDataURL(file);}
+else addDoc(collection(db,"posts"),{user:username,avatar:avatar,text:text,photo:"",like:0});
 }
 
-/* SHAKE + Radar */
+/* Хештеги */
+function updateHashtags(posts){hashtags={};posts.forEach(p=>{p.text.split(" ").forEach(w=>{if(w.startsWith("#")){hashtags[w]=(hashtags[w]||0)+1;}});});
+}
+window.showHashtags=function(){let box=document.getElementById("hashtagsBox");let content=document.getElementById("tagsContent");box.style.display="block";let arr=[];for(let t in hashtags){arr.push({tag:t,count:hashtags[t]});}arr.sort((a,b)=>b.count-a.count);content.innerHTML="<b>Popular hashtags:</b><br><br>";arr.forEach(t=>{content.innerHTML+=t.tag+" ("+t.count+")<br>";});}
+window.closeHashtags=function(){document.getElementById("hashtagsBox").style.display="none";}
+
+/* Посты и лайки */
+onSnapshot(collection(db,"posts"),snap=>{let arr=[];snap.forEach(d=>{arr.push({id:d.id,...d.data()});});arr.sort((a,b)=>b.like-a.like);document.getElementById("posts").innerHTML="";arr.forEach(data=>{let img=data.photo?`<img class="postimg" src="${data.photo}">`:"";let del="";if(data.user==username){del=`<button class="deleteBtn" onclick="delPost('${data.id}')">🗑</button>`;}let div=document.createElement("div");div.className="post";div.innerHTML=`${del}<img class="avatar" src="${data.avatar}" onclick="openProfile('${data.user}','${data.avatar}')"><b>${data.user}</b><br>${data.text}${img}<br><button class="like" onclick="like('${data.id}',${data.like})">👍 ${data.like}</button>`;document.getElementById("posts").append(div);});updateHashtags(arr);});
+window.like=async(id,count)=>{await updateDoc(doc(db,"posts",id),{like:count+1});}
+window.delPost=async id=>{if(confirm("Delete post?")) await deleteDoc(doc(db,"posts",id));}
+
+/* Профиль */
+window.openProfile=async(user,av)=>{openUser=user;document.getElementById("profile").style.display="block";document.getElementById("nick").innerText=user;document.getElementById("avatar").src=av;let snap=await getDocs(collection(db,"posts"));document.getElementById("profilePosts").innerHTML="";snap.forEach(p=>{let d=p.data();if(d.user==user){let div=document.createElement("div");div.className="post";div.innerHTML=`${d.text}<br><img class="postimg" src="${d.photo}">`;document.getElementById("profilePosts").append(div);}});loadSubs();}
+document.getElementById("profileButton").onclick=()=>{openProfile(username,avatar);}
+async function loadSubs(){let snap=await getDocs(collection(db,"subs"));let c=0;snap.forEach(d=>{if(d.data().to==openUser)c++;});document.getElementById("subs").innerText=c;}
+document.getElementById("subscribe").onclick=async()=>{if(openUser==username)return;let q=query(collection(db,"subs"),where("from","==",username),where("to","==",openUser));let snap=await getDocs(q);if(!snap.empty)return alert("Already subscribed");await addDoc(collection(db,"subs"),{from:username,to:openUser});loadSubs();}
+
+/* Chat */
+document.getElementById("dm").onclick=()=>{document.getElementById("chat").style.display="flex";}
+window.sendMsg=()=>{let text=document.getElementById("msg").value;let div=document.createElement("div");div.innerText=username+": "+text;document.getElementById("messages").append(div);document.getElementById("msg").value="";}
+
+/* Avatar edit once/day */
+window.editAvatar=()=>{let today=new Date().toDateString();if(lastAvatarChange===today){alert("You can change your avatar only once per day!");return;}let input=document.createElement("input");input.type="file";input.accept="image/*";input.onchange=e=>{let file=e.target.files[0];if(!file)return;let r=new FileReader();r.onload=()=>{avatar=r.result;localStorage.setItem("avatar",avatar);localStorage.setItem("lastAvatarChange",today);lastAvatarChange=today;document.getElementById("myavatar").src=avatar;document.getElementById("profileBtnImg").src=avatar;if(document.getElementById("avatar"))document.getElementById("avatar").src=avatar;}r.readAsDataURL(file);}input.click();}
+
+/* Loading screen stars */
+for(let i=0;i<50;i++){let s=document.createElement("div");s.className="star";s.style.left=Math.random()*100+"%";s.style.top=Math.random()*100+"%";s.style.width=(Math.random()*2+1)+"px";s.style.height=s.style.width;document.getElementById("loadingScreen").appendChild(s);}
+setTimeout(()=>{let ls=document.getElementById("loadingScreen");ls.style.transition="opacity 1s";ls.style.opacity="0";setTimeout(()=>{ls.style.display="none";},1000);document.getElementById("app").style.display="block";},5000);
+
+/* Shake / Radar / Nearby / Compass */
 let lastShake=0;
-window.enableMotion=async()=>{
-if(typeof DeviceMotionEvent!=="undefined" && typeof DeviceMotionEvent.requestPermission==="function"){
-let res=await DeviceMotionEvent.requestPermission();
-if(res==="granted") alert("Shake enabled ✅");
-}
-};
+window.enableMotion=async()=>{if(typeof DeviceMotionEvent!=="undefined" && typeof DeviceMotionEvent.requestPermission==="function"){let res=await DeviceMotionEvent.requestPermission();if(res==="granted")alert("Shake enabled ✅");}};
+window.addEventListener("devicemotion",(e)=>{let a=e.accelerationIncludingGravity;if(!a)return;let power=Math.abs(a.x)+Math.abs(a.y)+Math.abs(a.z);if(power>25 && Date.now()-lastShake>3000){lastShake=Date.now();startRadar();}});
 
-window.addEventListener("devicemotion",(e)=>{
-let a=e.accelerationIncludingGravity;if(!a)return;
-let power=Math.abs(a.x)+Math.abs(a.y)+Math.abs(a.z);
-if(power>25 && Date.now()-lastShake>3000){lastShake=Date.now();startRadar();}
-});
+async function startRadar(){document.getElementById("radarBox").style.display="block";document.getElementById("radarBox").innerText="📡 Searching...";await addDoc(collection(db,"radar"),{user,time:Date.now()});onSnapshot(collection(db,"radar"),snap=>{snap.forEach(doc=>{let d=doc.data();if(d.user!==username && Date.now()-d.time<5000){document.getElementById("radarBox").innerText="✅ CONNECTED WITH "+d.user;startChat(d.user);setTimeout(()=>document.getElementById("radarBox").style.display="none",3000);compassTo(d.user);}});});}
 
-async function startRadar(){
-document.getElementById("radarBox").style.display="block";
-document.getElementById("radarBox").innerText="📡 Searching...";
-await addDoc(collection(db,"radar"),{user,time:Date.now()});
-onSnapshot(collection(db,"radar"),snap=>{
-snap.forEach(doc=>{let d=doc.data();
-if(d.user!==username && Date.now()-d.time<5000){ 
-document.getElementById("radarBox").innerText="✅ CONNECTED WITH "+d.user;
-startChat(d.user);
-setTimeout(()=>document.getElementById("radarBox").style.display="none",3000);
-compassTo(d.user); // NEW FEATURE
-}
-});
-});
-}
+window.toggleNearby=()=>{let box=document.getElementById("nearbyBox");box.style.display=box.style.display==="none"?"block":"none";};
+onSnapshot(collection(db,"geo"),snap=>{let list=document.getElementById("nearbyList");list.innerHTML="";snap.forEach(doc=>{let d=doc.data();if(d.user!==username && myPos){let distance=dist(myPos,{lat:d.lat,lon:d.lon});if(distance<100){let div=document.createElement("div");div.innerHTML=`${d.user} (${Math.floor(distance)}m) <button onclick="connectUser('${d.user}')">CONNECT</button>`;list.append(div);}}});});
 
-/* Nearby list */
-window.toggleNearby=()=>{
-let box=document.getElementById("nearbyBox");
-box.style.display=box.style.display==="none"?"block":"none";
-};
-onSnapshot(collection(db,"geo"),snap=>{
-let list=document.getElementById("nearbyList"); list.innerHTML="";
-snap.forEach(doc=>{
-let d=doc.data();
-if(d.user!==username && myPos){
-let distance=dist(myPos,{lat:d.lat,lon:d.lon});
-if(distance<100){
-let div=document.createElement("div");
-div.innerHTML=`${d.user} (${Math.floor(distance)}m) <button onclick="connectUser('${d.user}')">CONNECT</button>`;
-list.append(div);
-}
-}
-});
-});
-
-/* Connect + Chat */
 window.connectUser=(user)=>{startChat(user);}
 function chatId(a,b){return [a,b].sort().join("_");}
-function startChat(user){
-currentChat=chatId(username,user);
-document.getElementById("chat").style.display="flex";
-onSnapshot(collection(db,"messages"),snap=>{
-let box=document.getElementById("messages"); box.innerHTML="";
-snap.forEach(doc=>{
-let d=doc.data();
-if(d.chat===currentChat){let div=document.createElement("div"); div.innerText=d.user+": "+d.text; box.append(div);}
-});
-});
-}
-window.sendMsg=()=>{
-let text=document.getElementById("msg").value;
-addDoc(collection(db,"messages"),{chat:currentChat,user:username,text,time:Date.now()});
-document.getElementById("msg").value="";
-};
+function startChat(user){currentChat=chatId(username,user);document.getElementById("chat").style.display="flex";onSnapshot(collection(db,"messages"),snap=>{let box=document.getElementById("messages");box.innerHTML="";snap.forEach(doc=>{let d=doc.data();if(d.chat===currentChat){let div=document.createElement("div");div.innerText=d.user+": "+d.text;box.append(div);}});});}
+window.sendMsg=()=>{let text=document.getElementById("msg").value;addDoc(collection(db,"messages"),{chat:currentChat,user:username,text,time:Date.now()});document.getElementById("msg").value="";}
 
-/* Distance function */
-function dist(a,b){
-let R=6371; let dLat=(b.lat-a.lat)*Math.PI/180; let dLon=(b.lon-a.lon)*Math.PI/180;
-let x=Math.sin(dLat/2)**2 + Math.cos(a.lat*Math.PI/180)*Math.cos(b.lat*Math.PI/180)*Math.sin(dLon/2)**2;
-return 2*R*Math.atan2(Math.sqrt(x),Math.sqrt(1-x))*1000;
-}
+function dist(a,b){let R=6371;let dLat=(b.lat-a.lat)*Math.PI/180;let dLon=(b.lon-a.lon)*Math.PI/180;let x=Math.sin(dLat/2)**2+Math.cos(a.lat*Math.PI/180)*Math.cos(b.lat*Math.PI/180)*Math.sin(dLon/2)**2;return 2*R*Math.atan2(Math.sqrt(x),Math.sqrt(1-x))*1000;}
 
-/* NEW FEATURE: Compass arrow */
-function compassTo(targetUser){
-onSnapshot(collection(db,"geo"),snap=>{
-snap.forEach(doc=>{
-let d=doc.data();
-if(d.user===targetUser && myPos){
-let dx=d.lon-myPos.lon;
-let dy=d.lat-myPos.lat;
-let angle=Math.atan2(dx,dy)*180/Math.PI;
-let arrow=document.getElementById("compassArrow");
-arrow.style.transform=`rotate(${angle}deg)`;
-arrow.style.display="block";
-}
-});
-});
-}
+function compassTo(targetUser){onSnapshot(collection(db,"geo"),snap=>{snap.forEach(doc=>{let d=doc.data();if(d.user===targetUser && myPos){let dx=d.lon-myPos.lon;let dy=d.lat-myPos.lat;let angle=Math.atan2(dx,dy)*180/Math.PI;let arrow=document.getElementById("compassArrow");arrow.style.transform=`rotate(${angle}deg)`;arrow.style.display="block";}});}
+
 </script>
+
 </body>
 </html>
