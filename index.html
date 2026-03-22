@@ -92,7 +92,7 @@ body{margin:0;font-family:sans-serif;text-align:center;background:#f0f0f0;}
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app.js";
-import { getFirestore, collection, addDoc, onSnapshot, getDocs, query, where, setDoc, doc } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js";
+import { getFirestore, collection, addDoc, onSnapshot, getDocs, query, doc, setDoc } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js";
 
 const firebaseConfig={apiKey:"AIzaSyAE46",authDomain:"mysocial-dabdf.firebaseapp.com",projectId:"mysocial-dabdf"};
 const app=initializeApp(firebaseConfig);
@@ -121,17 +121,26 @@ window.login=function(){
 }
 
 function start(){
+  // Показываем интерфейс сразу
   document.getElementById("login").style.display="none";
   document.getElementById("app").style.display="block";
   document.getElementById("user").innerText=username;
   document.getElementById("myavatar").src=avatar;
   document.getElementById("profileBtnImg").src=avatar;
 
+  // Геолокация
   if(navigator.geolocation){
-    navigator.geolocation.watchPosition(pos=>{
-      myPos={lat:pos.coords.latitude,lon:pos.coords.longitude};
-      setDoc(doc(db,"geo",username),{user:username,lat:myPos.lat,lon:myPos.lon,time:Date.now()});
-    });
+    navigator.geolocation.getCurrentPosition(
+      pos => {
+        myPos = {lat: pos.coords.latitude, lon: pos.coords.longitude};
+        setDoc(doc(db,"geo",username),{user:username,lat:myPos.lat,lon:myPos.lon,time:Date.now()});
+        navigator.geolocation.watchPosition(pos=>{
+          myPos={lat:pos.coords.latitude,lon:pos.coords.longitude};
+          setDoc(doc(db,"geo",username),{user:username,lat:myPos.lat,lon:myPos.lon,time:Date.now()});
+        }, err=>console.log("watchPosition error:", err), {enableHighAccuracy:true});
+      },
+      err=>{console.log("geolocation error:", err);}
+    );
   }
 
   // Shake detection
