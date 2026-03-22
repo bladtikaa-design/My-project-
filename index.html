@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+ <!DOCTYPE html>
 <html>
 <head>
 <meta charset="UTF-8">
@@ -11,8 +11,10 @@ font-family:sans-serif;
 text-align:center;
 background:#f0f0f0;
 }
-.dark{background:#000;color:white;}
-
+.dark{
+background:#000;
+color:white;
+}
 #animatedText{
 font-size:28px;
 font-weight:bold;
@@ -24,23 +26,169 @@ animation:glow 2s infinite alternate;
 50%{color:#55ff55;}
 100%{color:#007700;}
 }
-
-/* 📡 radar */
-#radarBox{
+/* 💎 таймер */
+#cooldownTimer{
 position:fixed;
 top:20px;
 left:50%;
 transform:translateX(-50%);
-padding:15px 30px;
+padding:12px 25px;
 border-radius:30px;
 background:rgba(255,255,255,0.15);
-backdrop-filter:blur(15px);
+backdrop-filter:blur(12px);
 color:#00ffcc;
 font-weight:bold;
 display:none;
-z-index:9999;
+z-index:999;
 }
-
+/* 🔥 hashtags */
+#hashtagsBox{
+position:fixed;
+top:100px;
+left:50%;
+transform:translateX(-50%);
+background:rgba(0,0,0,0.7);
+color:white;
+padding:20px;
+border-radius:15px;
+backdrop-filter:blur(10px);
+max-width:300px;
+display:none;
+}
+#closeTags{
+position:absolute;
+top:8px;
+right:12px;
+cursor:pointer;
+font-size:18px;
+}
+#tagsContent{
+margin-top:10px;
+}
+/* космос */
+#stars{
+position:fixed;
+width:100%;
+height:100%;
+z-index:-1;
+}
+.star{
+position:absolute;
+width:3px;
+height:3px;
+background:white;
+border-radius:50%;
+animation:move 8s linear infinite;
+}
+@keyframes move{
+from{transform:translateY(-10px)}
+to{transform:translateY(100vh)}
+}
+/* пост */
+.post{
+background:white;
+max-width:400px;
+margin:10px auto;
+padding:10px;
+border-radius:12px;
+position:relative;
+}
+.dark .post{
+background:#111;
+}
+.avatar{
+width:40px;
+height:40px;
+border-radius:50%;
+cursor:pointer;
+}
+.postimg{
+max-width:100%;
+border-radius:10px;
+margin-top:5px;
+}
+/* лайк */
+.like{
+border:none;
+padding:6px 12px;
+border-radius:10px;
+cursor:pointer;
+}
+/* удалить */
+.deleteBtn{
+position:absolute;
+top:8px;
+right:8px;
+background:red;
+color:white;
+border:none;
+border-radius:10px;
+padding:5px 8px;
+cursor:pointer;
+font-size:16px;
+}
+/* кнопки */
+.mainBtn{
+border:none;
+padding:10px 15px;
+border-radius:20px;
+cursor:pointer;
+margin:5px;
+}
+/* liquid glass */
+#profileButton{
+position:fixed;
+bottom:20px;
+right:20px;
+width:200px;
+height:60px;
+border-radius:40px;
+background:rgba(255,255,255,0.15);
+backdrop-filter:blur(10px);
+display:flex;
+align-items:center;
+gap:10px;
+padding-left:10px;
+cursor:pointer;
+}
+#profileButton img{
+width:45px;
+height:45px;
+border-radius:50%;
+}
+/* профиль */
+#profile{
+position:fixed;
+top:0;
+left:0;
+width:100%;
+height:100%;
+background:black;
+color:white;
+display:none;
+padding:20px;
+overflow:auto;
+}
+#close{
+position:absolute;
+top:20px;
+right:20px;
+font-size:30px;
+cursor:pointer;
+}
+#avatar{
+width:100px;
+height:100px;
+border-radius:50%;
+border:3px solid white;
+}
+#subscribe,#dm{
+border:none;
+padding:10px 15px;
+border-radius:20px;
+margin:5px;
+cursor:pointer;
+}
 /* чат */
 #chat{
 position:fixed;
@@ -52,23 +200,81 @@ background:white;
 display:none;
 flex-direction:column;
 }
-#messages{flex:1;overflow:auto;color:black;}
+#messages{
+flex:1;
+overflow:auto;
+color:black;
+}
 
-.mainBtn{
-border:none;
-padding:10px 15px;
-border-radius:20px;
-cursor:pointer;
-margin:5px;
+/* 🌀 екран завантаження */
+#loadingScreen{
+  position:fixed;
+  top:0;
+  left:0;
+  width:100%;
+  height:100%;
+  background:black;
+  color:white;
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+  align-items:center;
+  z-index:1000;
+}
+
+#loaderDots{
+  display:flex;
+  gap:15px;
+  margin-bottom:20px;
+}
+
+.dot{
+  width:15px;
+  height:15px;
+  background:white;
+  border-radius:50%;
+  animation:dotMove 1.5s infinite ease-in-out;
+}
+
+.dot:nth-child(2){ animation-delay:0.3s; }
+.dot:nth-child(3){ animation-delay:0.6s; }
+
+@keyframes dotMove{
+  0%, 80%, 100% { transform: scale(0); }
+  40% { transform: scale(1); }
+}
+
+#loadingText{
+  font-size:20px;
+  font-weight:bold;
+  color:#fff;
 }
 </style>
 </head>
 
 <body>
 
+<!-- Екран завантаження -->
+<div id="loadingScreen">
+  <div id="loaderDots">
+    <div class="dot"></div>
+    <div class="dot"></div>
+    <div class="dot"></div>
+  </div>
+  <div id="loadingText">Loading... wait 5 seconds</div>
+</div>
+
+<div id="stars"></div>
+
 <div id="animatedText">BLADTIK SITE OFFICIAL</div>
 
-<div id="radarBox">📡 Searching...</div>
+<div id="cooldownTimer"></div>
+
+<!-- 🔥 hashtags -->
+<div id="hashtagsBox">
+<div id="closeTags" onclick="closeHashtags()">✖</div>
+<div id="tagsContent"></div>
+</div>
 
 <div id="login">
 <input id="nickname" placeholder="Nickname"><br><br>
@@ -78,19 +284,39 @@ margin:5px;
 
 <div id="app" style="display:none">
 
-<button onclick="enableMotion()" class="mainBtn">📳 Enable Shake</button>
-
 <div>
-<img id="myavatar" style="width:40px;border-radius:50%">
+<img id="myavatar" class="avatar">
 <b id="user"></b>
+<button onclick="theme()">🌙</button>
 </div>
 
 <br>
 
 <input id="text" placeholder="Write post"><br><br>
-<button onclick="post()">Post</button>
+<input type="file" id="photo"><br><br>
+
+<button class="mainBtn" onclick="post()">Post</button>
+<button class="mainBtn" onclick="showHashtags()">🔥 Popular #</button>
 
 <div id="posts"></div>
+
+</div>
+
+<!-- liquid glass кнопка с редактированием аватара -->
+<div id="profileButton">
+<img id="profileBtnImg">
+<span>MY PROFILE</span>
+<button onclick="editAvatar()" style="margin-left:10px;padding:5px 10px;border-radius:12px;cursor:pointer;">Edit My Avatar</button>
+</div>
+
+<div id="profile">
+<div id="close" onclick="closeProfile()">✖</div>
+<img id="avatar">
+<h2 id="nick"></h2>
+<div>Subscribers: <span id="subs">0</span></div>
+<button id="subscribe">Subscribe</button>
+<button id="dm">💬 DM MESSAGE</button>
+<div id="profilePosts"></div>
 </div>
 
 <div id="chat">
@@ -102,29 +328,48 @@ margin:5px;
 <script type="module">
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app.js";
-import { getFirestore, collection, addDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js";
+import { getFirestore, collection, addDoc, onSnapshot, updateDoc, deleteDoc, doc, getDocs, query, where } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js";
 
-const app=initializeApp({
+const firebaseConfig={
 apiKey:"AIzaSyAE46",
 authDomain:"mysocial-dabdf.firebaseapp.com",
 projectId:"mysocial-dabdf"
-});
+};
+
+const app=initializeApp(firebaseConfig);
 const db=getFirestore(app);
 
-let username,avatar;
+let lastPostTime=0;
+let cooldownInterval=null;
+let hashtags={};
 
-/* login */
+/* 🌌 космос */
+for(let i=0;i<120;i++){
+let s=document.createElement("div");
+s.className="star";
+s.style.left=Math.random()*100+"%";
+s.style.top=Math.random()*100+"%";
+document.getElementById("stars").appendChild(s);
+}
+
+/* ⚡ дані користувача */
+let username=localStorage.getItem("username");
+let avatar=localStorage.getItem("avatar");
+let lastAvatarChange = localStorage.getItem("lastAvatarChange");
+
+if(username) start();
+
 window.login=function(){
 username=document.getElementById("nickname").value;
 let file=document.getElementById("avatarInput").files[0];
-let r=new FileReader();
-r.onload=()=>{
-avatar=r.result;
+let reader=new FileReader();
+reader.onload=function(){
+avatar=reader.result;
 localStorage.setItem("username",username);
 localStorage.setItem("avatar",avatar);
 start();
 }
-r.readAsDataURL(file);
+reader.readAsDataURL(file);
 }
 
 function start(){
@@ -132,89 +377,198 @@ document.getElementById("login").style.display="none";
 document.getElementById("app").style.display="block";
 document.getElementById("user").innerText=username;
 document.getElementById("myavatar").src=avatar;
+document.getElementById("profileBtnImg").src=avatar;
 }
 
-/* пост */
+window.theme=function(){
+document.body.classList.toggle("dark");
+}
+
+/* ⏱️ таймер */
+function startCooldown(){
+let t=document.getElementById("cooldownTimer");
+clearInterval(cooldownInterval);
+cooldownInterval=setInterval(()=>{
+let left=20000-(Date.now()-lastPostTime);
+if(left<=0){
+clearInterval(cooldownInterval);
+t.style.display="none";
+return;
+}
+t.innerText="You can post again in "+Math.ceil(left/1000)+"s";
+t.style.display="block";
+},200);
+}
+
+/* 📝 пост */
 window.post=function(){
+if(Date.now()-lastPostTime<20000){
+startCooldown();
+return;
+}
+lastPostTime=Date.now();
+startCooldown();
+
+let text=document.getElementById("text").value;
+let file=document.getElementById("photo").files[0];
+
+if(file){
+let r=new FileReader();
+r.onload=async()=>{
+await addDoc(collection(db,"posts"),{
+user:username,avatar:avatar,text:text,photo:r.result,like:0
+});
+}
+r.readAsDataURL(file);
+}else{
 addDoc(collection(db,"posts"),{
-user:username,
-text:document.getElementById("text").value
+user:username,avatar:avatar,text:text,photo:"",like:0
+});
+}
+}
+
+/* #️⃣ хештеги */
+function updateHashtags(posts){
+hashtags={};
+posts.forEach(p=>{
+p.text.split(" ").forEach(w=>{
+if(w.startsWith("#")){
+hashtags[w]=(hashtags[w]||0)+1;
+}
+});
 });
 }
 
-/* 📳 iPhone разрешение */
-window.enableMotion = async () => {
-if (typeof DeviceMotionEvent !== "undefined" &&
-    typeof DeviceMotionEvent.requestPermission === "function") {
-    try {
-        let res = await DeviceMotionEvent.requestPermission();
-        if (res === "granted") {
-            alert("Shake enabled ✅");
-        }
-    } catch(e){
-        alert("Error");
-    }
+window.showHashtags=function(){
+let box=document.getElementById("hashtagsBox");
+let content=document.getElementById("tagsContent");
+
+box.style.display="block";
+
+let arr=[];
+for(let t in hashtags){
+arr.push({tag:t,count:hashtags[t]});
 }
-};
 
-/* 📡 SHAKE DETECT */
-let lastShake=0;
-let connected=false;
+arr.sort((a,b)=>b.count-a.count);
 
-window.addEventListener("devicemotion",(e)=>{
-let acc=e.accelerationIncludingGravity;
-if(!acc) return;
+content.innerHTML="<b>Popular hashtags:</b><br><br>";
 
-let power=Math.abs(acc.x)+Math.abs(acc.y)+Math.abs(acc.z);
-
-if(power>25){
-if(Date.now()-lastShake<3000) return;
-lastShake=Date.now();
-startRadar();
+arr.forEach(t=>{
+content.innerHTML+=t.tag+" ("+t.count+")<br>";
+});
 }
+
+window.closeHashtags=function(){
+document.getElementById("hashtagsBox").style.display="none";
+}
+
+/* 📌 посты */
+onSnapshot(collection(db,"posts"),snap=>{
+
+let arr=[];
+snap.forEach(d=>{
+arr.push({id:d.id,...d.data()});
 });
 
-async function startRadar(){
-if(connected) return;
+arr.sort((a,b)=>b.like-a.like);
 
-let radar=document.getElementById("radarBox");
-radar.style.display="block";
-radar.innerText="📡 Searching...";
+document.getElementById("posts").innerHTML="";
 
-await addDoc(collection(db,"radar"),{
-user:username,
-time:Date.now()
-});
+arr.forEach(data=>{
 
-onSnapshot(collection(db,"radar"),snap=>{
-snap.forEach(docu=>{
-let d=docu.data();
+let img=data.photo?`<img class="postimg" src="${data.photo}">`:"";
 
-if(d.user!==username && Date.now()-d.time<5000 && !connected){
+let del="";
+if(data.user==username){
+del=`<button class="deleteBtn" onclick="delPost('${data.id}')">🗑</button>`;
+}
 
-connected=true;
-
-radar.innerText="✅ CONNECTED WITH "+d.user;
-
-/* 💬 открыть чат */
-document.getElementById("chat").style.display="flex";
-
-/* сообщение в чат */
 let div=document.createElement("div");
-div.innerText="🔗 Connected with "+d.user;
-document.getElementById("messages").append(div);
+div.className="post";
 
-setTimeout(()=>{
-radar.style.display="none";
-connected=false;
-},5000);
+div.innerHTML=`
+${del}
+<img class="avatar" src="${data.avatar}" onclick="openProfile('${data.user}','${data.avatar}')">
+<b>${data.user}</b>
+<br>
+${data.text}
+${img}
+<br>
+<button class="like" onclick="like('${data.id}',${data.like})">👍 ${data.like}</button>
+`;
 
+document.getElementById("posts").append(div);
+
+});
+
+updateHashtags(arr);
+
+});
+
+window.like=async(id,count)=>{
+await updateDoc(doc(db,"posts",id),{like:count+1});
+}
+
+window.delPost=async id=>{
+if(confirm("Delete post?")) await deleteDoc(doc(db,"posts",id));
+}
+
+let openUser="";
+
+window.openProfile=async(user,av)=>{
+openUser=user;
+document.getElementById("profile").style.display="block";
+document.getElementById("nick").innerText=user;
+document.getElementById("avatar").src=av;
+
+let snap=await getDocs(collection(db,"posts"));
+document.getElementById("profilePosts").innerHTML="";
+
+snap.forEach(p=>{
+let d=p.data();
+if(d.user==user){
+let div=document.createElement("div");
+div.className="post";
+div.innerHTML=`${d.text}<br><img class="postimg" src="${d.photo}">`;
+document.getElementById("profilePosts").append(div);
 }
 });
+
+loadSubs();
+}
+
+document.getElementById("profileButton").onclick=()=>{
+openProfile(username,avatar);
+}
+
+/* 👥 подписки */
+async function loadSubs(){
+let snap=await getDocs(collection(db,"subs"));
+let c=0;
+snap.forEach(d=>{
+if(d.data().to==openUser) c++;
 });
+document.getElementById("subs").innerText=c;
+}
+
+document.getElementById("subscribe").onclick=async()=>{
+if(openUser==username) return;
+
+let q=query(collection(db,"subs"),where("from","==",username),where("to","==",openUser));
+let snap=await getDocs(q);
+
+if(!snap.empty) return alert("Already subscribed");
+
+await addDoc(collection(db,"subs"),{from:username,to:openUser});
+loadSubs();
 }
 
 /* 💬 чат */
+document.getElementById("dm").onclick=()=>{
+document.getElementById("chat").style.display="flex";
+}
+
 window.sendMsg=()=>{
 let text=document.getElementById("msg").value;
 let div=document.createElement("div");
@@ -222,6 +576,61 @@ div.innerText=username+": "+text;
 document.getElementById("messages").append(div);
 document.getElementById("msg").value="";
 }
+
+window.closeProfile=()=>{
+document.getElementById("profile").style.display="none";
+}
+
+/* 🖼️ Edit My Avatar раз в день */
+window.editAvatar = () => {
+    let today = new Date().toDateString();
+    if (lastAvatarChange === today) {
+        alert("You can change your avatar only once per day!");
+        return;
+    }
+    let input = document.createElement("input");
+    input.type = "file";
+    input.accept = "image/*";
+    input.onchange = e => {
+        let file = e.target.files[0];
+        if (!file) return;
+        let reader = new FileReader();
+        reader.onload = () => {
+            avatar = reader.result;
+            localStorage.setItem("avatar", avatar);
+            localStorage.setItem("lastAvatarChange", today);
+            lastAvatarChange = today;
+            document.getElementById("myavatar").src = avatar;
+            document.getElementById("profileBtnImg").src = avatar;
+            if(document.getElementById("avatar")) document.getElementById("avatar").src = avatar;
+        }
+        reader.readAsDataURL(file);
+    }
+    input.click();
+}
+
+/* 🌌 Зірки на loading screen */
+for(let i=0;i<50;i++){
+  let s=document.createElement("div");
+  s.className="star";
+  s.style.left=Math.random()*100+"%";
+  s.style.top=Math.random()*100+"%";
+  s.style.width=(Math.random()*2+1)+"px";
+  s.style.height=s.style.width;
+  document.getElementById("loadingScreen").appendChild(s);
+}
+
+// ⏳ через 5 секунд прибираємо loading screen і показуємо основний контент
+setTimeout(()=>{
+  let ls=document.getElementById("loadingScreen");
+  ls.style.transition="opacity 1s";
+  ls.style.opacity="0";
+  setTimeout(()=>{ ls.style.display="none"; },1000);
+  document.getElementById("app").style.display="block";
+},5000);
+
+// Приховуємо основний контент на старті
+document.getElementById("app").style.display="none";
 
 </script>
 
