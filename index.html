@@ -51,6 +51,7 @@ body{
   backdrop-filter:blur(10px);
   max-width:300px;
   display:none;
+  z-index:1000;
 }
 #closeTags{position:absolute;top:8px;right:12px;cursor:pointer;font-size:18px;}
 #tagsContent{margin-top:10px;}
@@ -95,36 +96,40 @@ body{
   display:none;
   padding:20px;
   overflow:auto;
+  z-index:1001;
 }
 #close{position:absolute;top:20px;right:20px;font-size:30px;cursor:pointer;}
 #avatar{width:100px;height:100px;border-radius:50%;border:3px solid white;}
 #subscribe,#dm{border:none;padding:10px 15px;border-radius:20px;margin:5px;cursor:pointer;}
 /* чат */
-#chat{position:fixed;bottom:0;right:0;width:300px;height:350px;background:white;display:none;flex-direction:column;}
+#chat{position:fixed;bottom:0;right:0;width:300px;height:350px;background:white;display:none;flex-direction:column;z-index:1001;}
 #messages{flex:1;overflow:auto;color:black;}
-/* compass */
-#compassArrow{
+/* радар */
+#radarBox{
   position:fixed;
-  top:100px;
-  left:50%;
-  transform:translateX(-50%) rotate(0deg);
-  width:40px;
-  height:40px;
-  background:red;
-  clip-path:polygon(50% 0%, 60% 100%, 50% 80%, 40% 100%);
+  top:80px;
+  right:20px;
+  width:180px;
+  height:180px;
+  border-radius:50%;
+  background:rgba(0,0,0,0.3);
+  backdrop-filter:blur(8px);
+  border:2px solid #00ffcc;
   display:none;
-  z-index:999;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  color:white;
+  padding:10px;
+  z-index:1002;
 }
+#radarBox h4{margin:0 0 5px 0;}
+#nearbyList{font-size:12px;text-align:left;max-height:120px;overflow:auto;width:100%;}
 /* 🌀 екран завантаження */
 #loadingScreen{
-  position:fixed;
-  top:0;left:0;width:100%;height:100%;
-  background:black;
-  color:white;
-  display:flex;
-  flex-direction:column;
-  justify-content:center;
-  align-items:center;
+  position:fixed;top:0;left:0;width:100%;height:100%;
+  background:black;color:white;
+  display:flex;flex-direction:column;justify-content:center;align-items:center;
   z-index:1000;
 }
 #loaderDots{display:flex;gap:15px;margin-bottom:20px;}
@@ -140,16 +145,13 @@ body{
 
 <!-- Loading screen -->
 <div id="loadingScreen">
-  <div id="loaderDots">
-    <div class="dot"></div><div class="dot"></div><div class="dot"></div>
-  </div>
+  <div id="loaderDots"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>
   <div id="loadingText">Loading... wait 5 seconds</div>
 </div>
 
 <div id="stars"></div>
 <div id="animatedText">BLADTIK SITE OFFICIAL</div>
 <div id="cooldownTimer"></div>
-<div id="compassArrow"></div>
 
 <!-- 🔥 hashtags -->
 <div id="hashtagsBox"><div id="closeTags" onclick="closeHashtags()">✖</div><div id="tagsContent"></div></div>
@@ -161,21 +163,17 @@ body{
 </div>
 
 <div id="app" style="display:none">
-
-<div>
-<img id="myavatar" class="avatar">
-<b id="user"></b>
-<button onclick="theme()">🌙</button>
-</div>
-
-<br>
-
-<input id="text" placeholder="Write post"><br><br>
-<input type="file" id="photo"><br><br>
-
-<button class="mainBtn" onclick="post()">Post</button>
-<button class="mainBtn" onclick="showHashtags()">🔥 Popular #</button>
-<div id="posts"></div>
+  <div>
+    <img id="myavatar" class="avatar">
+    <b id="user"></b>
+    <button onclick="theme()">🌙</button>
+  </div>
+  <br>
+  <input id="text" placeholder="Write post"><br><br>
+  <input type="file" id="photo"><br><br>
+  <button class="mainBtn" onclick="post()">Post</button>
+  <button class="mainBtn" onclick="showHashtags()">🔥 Popular #</button>
+  <div id="posts"></div>
 </div>
 
 <!-- liquid glass -->
@@ -201,10 +199,16 @@ body{
 <button onclick="sendMsg()">Send</button>
 </div>
 
+<!-- Радар Nearby -->
+<div id="radarBox">
+<h4>Nearby Users</h4>
+<div id="nearbyList"></div>
+</div>
+
 <script type="module">
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app.js";
-import { getFirestore, collection, addDoc, onSnapshot, updateDoc, deleteDoc, doc, getDocs, query, where } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js";
+import { getFirestore, collection, addDoc, onSnapshot, getDocs, query, where } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js";
 
 const firebaseConfig={
 apiKey:"AIzaSyAE46",
@@ -218,11 +222,10 @@ const db=getFirestore(app);
 let lastPostTime=0;
 let cooldownInterval=null;
 let hashtags={};
-let myPos=null;
 let username=localStorage.getItem("username");
 let avatar=localStorage.getItem("avatar");
 let lastAvatarChange = localStorage.getItem("lastAvatarChange");
-let currentChat="";
+let myPos={lat:0,lon:0};
 
 // 🌌 космос
 for(let i=0;i<120;i++){
@@ -251,10 +254,12 @@ window.login=function(){
 
 function start(){
   document.getElementById("login").style.display="none";
+  document.getElementById("app").style.display="block";
   document.getElementById("user").innerText=username;
   document.getElementById("myavatar").src=avatar;
   document.getElementById("profileBtnImg").src=avatar;
-  // Получаем позицию
+
+  // Watch position
   if(navigator.geolocation){
     navigator.geolocation.watchPosition(pos=>{
       myPos={lat:pos.coords.latitude, lon:pos.coords.longitude};
@@ -262,8 +267,51 @@ function start(){
       addDoc(geoRef,{user:username,lat:myPos.lat,lon:myPos.lon,time:Date.now()});
     });
   }
+
+  // Shake detection
+  if(window.DeviceMotionEvent){
+    let lastX=0,lastY=0,lastZ=0,lastTime=0;
+    window.addEventListener('devicemotion',e=>{
+      let acc = e.accelerationIncludingGravity;
+      let curTime = Date.now();
+      if(curTime-lastTime>500){
+        let diff=Math.abs(acc.x-lastX)+Math.abs(acc.y-lastY)+Math.abs(acc.z-lastZ);
+        if(diff>25){ showRadar(); }
+        lastX=acc.x; lastY=acc.y; lastZ=acc.z; lastTime=curTime;
+      }
+    });
+  }
 }
 
+// Radar
+function showRadar(){
+  document.getElementById("radarBox").style.display="flex";
+  updateNearby();
+  setTimeout(()=>{document.getElementById("radarBox").style.display="none";},7000);
+}
+
+async function updateNearby(){
+  let snap = await getDocs(collection(db,"geo"));
+  let list = document.getElementById("nearbyList");
+  list.innerHTML="";
+  snap.forEach(d=>{
+    let data = d.data();
+    if(data.user!==username && distance(myPos.lat,myPos.lon,data.lat,data.lon)<0.2){
+      list.innerHTML+=`<div>${data.user} - CONNECTED</div>`;
+    }
+  });
+}
+
+function distance(lat1,lon1,lat2,lon2){
+  let R = 6371;
+  let dLat = (lat2-lat1)*Math.PI/180;
+  let dLon = (lon2-lon1)*Math.PI/180;
+  let a = Math.sin(dLat/2)*Math.sin(dLat/2)+Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLon/2)*Math.sin(dLon/2);
+  let c=2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a));
+  return R*c; // km
+}
+
+// Theme
 window.theme=function(){document.body.classList.toggle("dark");}
 
 // Timer
@@ -278,159 +326,12 @@ function startCooldown(){
   },200);
 }
 
-// Post
-window.post=function(){
-  if(Date.now()-lastPostTime<20000){startCooldown(); return;}
-  lastPostTime=Date.now(); startCooldown();
-
-  let text=document.getElementById("text").value;
-  let file=document.getElementById("photo").files[0];
-
-  if(file){
-    let r=new FileReader();
-    r.onload=async()=>{
-      await addDoc(collection(db,"posts"),{user:username,avatar:avatar,text:text,photo:r.result,like:0});
-    }
-    r.readAsDataURL(file);
-  }else{
-    addDoc(collection(db,"posts"),{user:username,avatar:avatar,text:text,photo:"",like:0});
-  }
-}
-
-// Hashtags
-function updateHashtags(posts){
-  hashtags={};
-  posts.forEach(p=>{
-    p.text.split(" ").forEach(w=>{
-      if(w.startsWith("#")) hashtags[w]=(hashtags[w]||0)+1;
-    });
-  });
-}
-
-window.showHashtags=function(){
-  let box=document.getElementById("hashtagsBox");
-  let content=document.getElementById("tagsContent");
-  box.style.display="block";
-  let arr=[];
-  for(let t in hashtags){arr.push({tag:t,count:hashtags[t]});}
-  arr.sort((a,b)=>b.count-a.count);
-  content.innerHTML="<b>Popular hashtags:</b><br><br>";
-  arr.forEach(t=>{content.innerHTML+=t.tag+" ("+t.count+")<br>";});
-}
-
-window.closeHashtags=function(){document.getElementById("hashtagsBox").style.display="none";}
-
-// Posts
-onSnapshot(collection(db,"posts"),snap=>{
-  let arr=[];
-  snap.forEach(d=>{arr.push({id:d.id,...d.data()});});
-  arr.sort((a,b)=>b.like-a.like);
-  document.getElementById("posts").innerHTML="";
-  arr.forEach(data=>{
-    let img=data.photo?`<img class="postimg" src="${data.photo}">`:"";
-    let del="";
-    if(data.user==username) del=`<button class="deleteBtn" onclick="delPost('${data.id}')">🗑</button>`;
-    let div=document.createElement("div");
-    div.className="post";
-    div.innerHTML=`${del}<img class="avatar" src="${data.avatar}" onclick="openProfile('${data.user}','${data.avatar}')"><b>${data.user}</b><br>${data.text}${img}<br><button class="like" onclick="like('${data.id}',${data.like})">👍 ${data.like}</button>`;
-    document.getElementById("posts").append(div);
-  });
-  updateHashtags(arr);
-});
-
-window.like=async(id,count)=>{await updateDoc(doc(db,"posts",id),{like:count+1});}
-window.delPost=async id=>{if(confirm("Delete post?")) await deleteDoc(doc(db,"posts",id));}
-
-// Profile
-let openUser="";
-window.openProfile=async(user,av)=>{
-  openUser=user;
-  document.getElementById("profile").style.display="block";
-  document.getElementById("nick").innerText=user;
-  document.getElementById("avatar").src=av;
-  let snap=await getDocs(collection(db,"posts"));
-  document.getElementById("profilePosts").innerHTML="";
-  snap.forEach(p=>{
-    let d=p.data();
-    if(d.user==user){
-      let div=document.createElement("div");
-      div.className="post";
-      div.innerHTML=`${d.text}<br><img class="postimg" src="${d.photo}">`;
-      document.getElementById("profilePosts").append(div);
-    }
-  });
-  loadSubs();
-}
-
-document.getElementById("profileButton").onclick=()=>{openProfile(username,avatar);}
-
-// Subscriptions
-async function loadSubs(){
-  let snap=await getDocs(collection(db,"subs"));
-  let c=0;
-  snap.forEach(d=>{if(d.data().to==openUser) c++;});
-  document.getElementById("subs").innerText=c;
-}
-
-document.getElementById("subscribe").onclick=async()=>{
-  if(openUser==username) return;
-  let q=query(collection(db,"subs"),where("from","==",username),where("to","==",openUser));
-  let snap=await getDocs(q);
-  if(!snap.empty) return alert("Already subscribed");
-  await addDoc(collection(db,"subs"),{from:username,to:openUser});
-  loadSubs();
-}
-
-// Chat
-window.connectUser=(user)=>{currentChat=[username,user].sort().join("_");document.getElementById("chat").style.display="flex";}
-window.sendMsg=()=>{let text=document.getElementById("msg").value;addDoc(collection(db,"messages"),{chat:currentChat,user:username,text,time:Date.now()});document.getElementById("msg").value="";}
-onSnapshot(collection(db,"messages"),snap=>{let box=document.getElementById("messages");box.innerHTML="";snap.forEach(doc=>{let d=doc.data();if(d.chat===currentChat){let div=document.createElement("div");div.innerText=d.user+": "+d.text;box.append(div);}});});
-
-// Close profile
-window.closeProfile=()=>{document.getElementById("profile").style.display="none";}
-
-// Edit avatar once per day
-window.editAvatar = () => {
-    let today = new Date().toDateString();
-    if (lastAvatarChange === today){alert("You can change your avatar only once per day!"); return;}
-    let input = document.createElement("input");
-    input.type = "file"; input.accept = "image/*";
-    input.onchange = e=>{
-        let file = e.target.files[0];
-        if(!file) return;
-        let reader = new FileReader();
-        reader.onload = ()=>{
-            avatar=reader.result;
-            localStorage.setItem("avatar",avatar);
-            localStorage.setItem("lastAvatarChange",today);
-            lastAvatarChange=today;
-            document.getElementById("myavatar").src=avatar;
-            document.getElementById("profileBtnImg").src=avatar;
-            if(document.getElementById("avatar")) document.getElementById("avatar").src=avatar;
-        }
-        reader.readAsDataURL(file);
-    }
-    input.click();
-}
-
-// Loading stars
-for(let i=0;i<50;i++){
-  let s=document.createElement("div");
-  s.className="star";
-  s.style.left=Math.random()*100+"%";
-  s.style.top=Math.random()*100+"%";
-  s.style.width=(Math.random()*2+1)+"px";
-  s.style.height=s.style.width;
-  document.getElementById("loadingScreen").appendChild(s);
-}
-
-// Hide loading screen after 5s
+// Hide loading screen
 setTimeout(()=>{
   let ls=document.getElementById("loadingScreen");
   ls.style.transition="opacity 1s"; ls.style.opacity="0";
-  setTimeout(()=>{ ls.style.display="none"; document.getElementById("app").style.display="block"; },1000);
+  setTimeout(()=>{ ls.style.display="none"; },1000);
 },5000);
-document.getElementById("app").style.display="none";
 
 </script>
 </body>
