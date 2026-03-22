@@ -11,10 +11,8 @@ font-family:sans-serif;
 text-align:center;
 background:#f0f0f0;
 }
-.dark{
-background:#000;
-color:white;
-}
+.dark{background:#000;color:white;}
+
 #animatedText{
 font-size:28px;
 font-weight:bold;
@@ -27,23 +25,7 @@ animation:glow 2s infinite alternate;
 100%{color:#007700;}
 }
 
-/* 💎 таймер */
-#cooldownTimer{
-position:fixed;
-top:20px;
-left:50%;
-transform:translateX(-50%);
-padding:12px 25px;
-border-radius:30px;
-background:rgba(255,255,255,0.15);
-backdrop-filter:blur(12px);
-color:#00ffcc;
-font-weight:bold;
-display:none;
-z-index:999;
-}
-
-/* 📡 RADAR */
+/* 📡 radar */
 #radarBox{
 position:fixed;
 top:20px;
@@ -57,167 +39,6 @@ color:#00ffcc;
 font-weight:bold;
 display:none;
 z-index:9999;
-animation:fadeIn 0.5s;
-}
-@keyframes fadeIn{
-from{opacity:0; transform:translateX(-50%) scale(0.8);}
-to{opacity:1; transform:translateX(-50%) scale(1);}
-}
-
-/* 🔥 hashtags */
-#hashtagsBox{
-position:fixed;
-top:100px;
-left:50%;
-transform:translateX(-50%);
-background:rgba(0,0,0,0.7);
-color:white;
-padding:20px;
-border-radius:15px;
-backdrop-filter:blur(10px);
-max-width:300px;
-display:none;
-}
-#closeTags{
-position:absolute;
-top:8px;
-right:12px;
-cursor:pointer;
-font-size:18px;
-}
-#tagsContent{
-margin-top:10px;
-}
-
-/* космос */
-#stars{
-position:fixed;
-width:100%;
-height:100%;
-z-index:-1;
-}
-.star{
-position:absolute;
-width:3px;
-height:3px;
-background:white;
-border-radius:50%;
-animation:move 8s linear infinite;
-}
-@keyframes move{
-from{transform:translateY(-10px)}
-to{transform:translateY(100vh)}
-}
-
-/* пост */
-.post{
-background:white;
-max-width:400px;
-margin:10px auto;
-padding:10px;
-border-radius:12px;
-position:relative;
-}
-.dark .post{
-background:#111;
-}
-.avatar{
-width:40px;
-height:40px;
-border-radius:50%;
-cursor:pointer;
-}
-.postimg{
-max-width:100%;
-border-radius:10px;
-margin-top:5px;
-}
-
-/* лайк */
-.like{
-border:none;
-padding:6px 12px;
-border-radius:10px;
-cursor:pointer;
-}
-
-/* удалить */
-.deleteBtn{
-position:absolute;
-top:8px;
-right:8px;
-background:red;
-color:white;
-border:none;
-border-radius:10px;
-padding:5px 8px;
-cursor:pointer;
-font-size:16px;
-}
-
-/* кнопки */
-.mainBtn{
-border:none;
-padding:10px 15px;
-border-radius:20px;
-cursor:pointer;
-margin:5px;
-}
-
-/* liquid glass */
-#profileButton{
-position:fixed;
-bottom:20px;
-right:20px;
-width:200px;
-height:60px;
-border-radius:40px;
-background:rgba(255,255,255,0.15);
-backdrop-filter:blur(10px);
-display:flex;
-align-items:center;
-gap:10px;
-padding-left:10px;
-cursor:pointer;
-}
-#profileButton img{
-width:45px;
-height:45px;
-border-radius:50%;
-}
-
-/* профиль */
-#profile{
-position:fixed;
-top:0;
-left:0;
-width:100%;
-height:100%;
-background:black;
-color:white;
-display:none;
-padding:20px;
-overflow:auto;
-}
-#close{
-position:absolute;
-top:20px;
-right:20px;
-font-size:30px;
-cursor:pointer;
-}
-#avatar{
-width:100px;
-height:100px;
-border-radius:50%;
-border:3px solid white;
-}
-#subscribe,#dm{
-border:none;
-padding:10px 15px;
-border-radius:20px;
-margin:5px;
-cursor:pointer;
 }
 
 /* чат */
@@ -231,56 +52,22 @@ background:white;
 display:none;
 flex-direction:column;
 }
-#messages{
-flex:1;
-overflow:auto;
-color:black;
-}
+#messages{flex:1;overflow:auto;color:black;}
 
-/* 🌀 loading */
-#loadingScreen{
-position:fixed;
-top:0;
-left:0;
-width:100%;
-height:100%;
-background:black;
-color:white;
-display:flex;
-flex-direction:column;
-justify-content:center;
-align-items:center;
-z-index:1000;
-}
-.dot{
-width:15px;
-height:15px;
-background:white;
-border-radius:50%;
-animation:dotMove 1.5s infinite ease-in-out;
-}
-@keyframes dotMove{
-0%,80%,100%{transform:scale(0);}
-40%{transform:scale(1);}
+.mainBtn{
+border:none;
+padding:10px 15px;
+border-radius:20px;
+cursor:pointer;
+margin:5px;
 }
 </style>
 </head>
 
 <body>
 
-<div id="loadingScreen">
-<div style="display:flex;gap:10px;">
-<div class="dot"></div>
-<div class="dot"></div>
-<div class="dot"></div>
-</div>
-<div>Loading...</div>
-</div>
-
-<div id="stars"></div>
 <div id="animatedText">BLADTIK SITE OFFICIAL</div>
 
-<div id="cooldownTimer"></div>
 <div id="radarBox">📡 Searching...</div>
 
 <div id="login">
@@ -290,21 +77,30 @@ animation:dotMove 1.5s infinite ease-in-out;
 </div>
 
 <div id="app" style="display:none">
-<img id="myavatar" class="avatar">
-<b id="user"></b>
-<button onclick="theme()">🌙</button>
 
-<br><br>
+<button onclick="enableMotion()" class="mainBtn">📳 Enable Shake</button>
+
+<div>
+<img id="myavatar" style="width:40px;border-radius:50%">
+<b id="user"></b>
+</div>
+
+<br>
 
 <input id="text" placeholder="Write post"><br><br>
-<input type="file" id="photo"><br><br>
-
 <button onclick="post()">Post</button>
 
 <div id="posts"></div>
 </div>
 
+<div id="chat">
+<div id="messages"></div>
+<input id="msg">
+<button onclick="sendMsg()">Send</button>
+</div>
+
 <script type="module">
+
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app.js";
 import { getFirestore, collection, addDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js";
 
@@ -341,20 +137,37 @@ document.getElementById("myavatar").src=avatar;
 /* пост */
 window.post=function(){
 addDoc(collection(db,"posts"),{
-user:username,text:document.getElementById("text").value
+user:username,
+text:document.getElementById("text").value
 });
 }
 
+/* 📳 iPhone разрешение */
+window.enableMotion = async () => {
+if (typeof DeviceMotionEvent !== "undefined" &&
+    typeof DeviceMotionEvent.requestPermission === "function") {
+    try {
+        let res = await DeviceMotionEvent.requestPermission();
+        if (res === "granted") {
+            alert("Shake enabled ✅");
+        }
+    } catch(e){
+        alert("Error");
+    }
+}
+};
+
 /* 📡 SHAKE DETECT */
 let lastShake=0;
+let connected=false;
 
 window.addEventListener("devicemotion",(e)=>{
 let acc=e.accelerationIncludingGravity;
 if(!acc) return;
 
-let total=Math.abs(acc.x)+Math.abs(acc.y)+Math.abs(acc.z);
+let power=Math.abs(acc.x)+Math.abs(acc.y)+Math.abs(acc.z);
 
-if(total>25){
+if(power>25){
 if(Date.now()-lastShake<3000) return;
 lastShake=Date.now();
 startRadar();
@@ -362,6 +175,8 @@ startRadar();
 });
 
 async function startRadar(){
+if(connected) return;
+
 let radar=document.getElementById("radarBox");
 radar.style.display="block";
 radar.innerText="📡 Searching...";
@@ -371,25 +186,43 @@ user:username,
 time:Date.now()
 });
 
-/* слушаем других */
 onSnapshot(collection(db,"radar"),snap=>{
 snap.forEach(docu=>{
 let d=docu.data();
-if(d.user!==username && Date.now()-d.time<5000){
+
+if(d.user!==username && Date.now()-d.time<5000 && !connected){
+
+connected=true;
+
 radar.innerText="✅ CONNECTED WITH "+d.user;
+
+/* 💬 открыть чат */
+document.getElementById("chat").style.display="flex";
+
+/* сообщение в чат */
+let div=document.createElement("div");
+div.innerText="🔗 Connected with "+d.user;
+document.getElementById("messages").append(div);
 
 setTimeout(()=>{
 radar.style.display="none";
-},3000);
+connected=false;
+},5000);
+
 }
 });
 });
 }
 
-/* loading */
-setTimeout(()=>{
-document.getElementById("loadingScreen").style.display="none";
-},3000);
+/* 💬 чат */
+window.sendMsg=()=>{
+let text=document.getElementById("msg").value;
+let div=document.createElement("div");
+div.innerText=username+": "+text;
+document.getElementById("messages").append(div);
+document.getElementById("msg").value="";
+}
+
 </script>
 
 </body>
