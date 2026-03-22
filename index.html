@@ -8,59 +8,42 @@
 body{margin:0;font-family:sans-serif;text-align:center;background:#f0f0f0;}
 .dark{background:#000;color:white;}
 
-#radarBox{
-position:fixed;
-top:20px;
-left:50%;
-transform:translateX(-50%);
-padding:15px 30px;
-border-radius:30px;
-background:rgba(255,255,255,0.15);
-backdrop-filter:blur(15px);
-color:#00ffcc;
-display:none;
-z-index:9999;
-}
+#animatedText{font-size:28px;font-weight:bold;color:#00ff00;animation:glow 2s infinite alternate;}
+@keyframes glow{0%{color:#00ff00;}50%{color:#55ff55;}100%{color:#007700;}}
 
-#chat{
-position:fixed;
-bottom:0;
-right:0;
-width:300px;
-height:350px;
-background:white;
-display:none;
-flex-direction:column;
-}
+/* Таймер */
+#cooldownTimer{position:fixed;top:20px;left:50%;transform:translateX(-50%);padding:12px 25px;border-radius:30px;background:rgba(255,255,255,0.15);backdrop-filter:blur(12px);color:#00ffcc;font-weight:bold;display:none;z-index:999;}
+
+/* Radar/Shake */
+#radarBox{position:fixed;top:20px;left:50%;transform:translateX(-50%);padding:15px 30px;border-radius:30px;background:rgba(255,255,255,0.15);backdrop-filter:blur(15px);color:#00ffcc;font-weight:bold;display:none;z-index:9999;animation:fadeIn 0.5s;}
+@keyframes fadeIn{from{opacity:0;transform:translateX(-50%) scale(0.8);}to{opacity:1;transform:translateX(-50%) scale(1);}}
+
+/* Компас-стрелка */
+#compassArrow{position:fixed;top:50%;left:50%;width:50px;height:50px;transform-origin:center center;display:none;z-index:9999;}
+
+/* Chat */
+#chat{position:fixed;bottom:0;right:0;width:300px;height:350px;background:white;display:none;flex-direction:column;}
 #messages{flex:1;overflow:auto;color:black;}
 
-#nearbyBox{
-position:fixed;
-bottom:0;
-left:0;
-width:100%;
-max-height:200px;
-background:rgba(0,0,0,0.8);
-color:white;
-overflow:auto;
-display:none;
-padding:10px;
-}
-
-button{
-padding:8px;
-margin:5px;
-border-radius:10px;
-border:none;
-cursor:pointer;
-}
+/* Nearby people */
+#nearbyBox{position:fixed;bottom:0;left:0;width:100%;max-height:200px;background:rgba(0,0,0,0.8);color:white;overflow:auto;display:none;padding:10px;}
+#nearbyBox button{margin:5px;padding:5px 10px;border-radius:10px;border:none;cursor:pointer;}
 </style>
 </head>
-
 <body>
 
-<h2>BLADTIK AIRDROP 🔥</h2>
+<div id="loadingScreen">
+  <div style="display:flex;gap:10px;">
+    <div class="dot" style="width:15px;height:15px;background:white;border-radius:50%;animation:dotMove 1.5s infinite ease-in-out;"></div>
+    <div class="dot" style="width:15px;height:15px;background:white;border-radius:50%;animation:dotMove 1.5s infinite ease-in-out 0.3s;"></div>
+    <div class="dot" style="width:15px;height:15px;background:white;border-radius:50%;animation:dotMove 1.5s infinite ease-in-out 0.6s;"></div>
+  </div>
+  <div>Loading...</div>
+</div>
 
+<div id="stars"></div>
+<div id="animatedText">BLADTIK SITE OFFICIAL</div>
+<div id="cooldownTimer"></div>
 <div id="radarBox">📡 Searching...</div>
 
 <div id="login">
@@ -70,15 +53,16 @@ cursor:pointer;
 </div>
 
 <div id="app" style="display:none">
-
 <button onclick="enableMotion()">📳 Enable Shake</button>
 <button onclick="toggleNearby()">👥 People nearby</button>
-
-<div>
 <img id="myavatar" style="width:40px;border-radius:50%">
 <b id="user"></b>
-</div>
 
+<br><br>
+<input id="text" placeholder="Write post"><br><br>
+<input type="file" id="photo"><br><br>
+<button onclick="post()">Post</button>
+<div id="posts"></div>
 </div>
 
 <div id="nearbyBox">
@@ -92,12 +76,12 @@ cursor:pointer;
 <button onclick="sendMsg()">Send</button>
 </div>
 
-<script type="module">
+<!-- Стрелка компаса -->
+<img id="compassArrow" src="https://cdn-icons-png.flaticon.com/512/60/60580.png">
 
+<script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app.js";
-import {
-getFirestore, collection, addDoc, onSnapshot
-} from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js";
+import { getFirestore, collection, addDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js";
 
 const app=initializeApp({
 apiKey:"AIzaSyAE46",
@@ -106,17 +90,17 @@ projectId:"mysocial-dabdf"
 });
 const db=getFirestore(app);
 
-let username,avatar;
-let myPos=null;
-let currentChat=null;
+let username,avatar,myPos=null,currentChat=null;
 
-/* login */
+/* Старый код login */
 window.login=function(){
 username=document.getElementById("nickname").value;
 let file=document.getElementById("avatarInput").files[0];
 let r=new FileReader();
 r.onload=()=>{
 avatar=r.result;
+localStorage.setItem("username",username);
+localStorage.setItem("avatar",avatar);
 start();
 }
 r.readAsDataURL(file);
@@ -130,160 +114,116 @@ document.getElementById("myavatar").src=avatar;
 
 /* GPS */
 navigator.geolocation.watchPosition(pos=>{
-myPos={
-lat:pos.coords.latitude,
-lon:pos.coords.longitude
-};
-
-addDoc(collection(db,"geo"),{
-user:username,
-lat:myPos.lat,
-lon:myPos.lon,
-time:Date.now()
-});
+myPos={lat:pos.coords.latitude,lon:pos.coords.longitude};
+addDoc(collection(db,"geo"),{user:username,lat:myPos.lat,lon:myPos.lon,time:Date.now()});
 });
 }
 
-/* 📳 iPhone */
-window.enableMotion=async()=>{
-if(typeof DeviceMotionEvent!=="undefined" &&
-typeof DeviceMotionEvent.requestPermission==="function"){
-let res=await DeviceMotionEvent.requestPermission();
-if(res==="granted") alert("Shake ON");
+/* Пост */
+window.post=function(){
+let text=document.getElementById("text").value;
+let file=document.getElementById("photo").files[0];
+if(file){
+let r=new FileReader();
+r.onload=()=>{ addDoc(collection(db,"posts"),{user,avatar,text,photo:r.result,like:0}); }
+r.readAsDataURL(file);
+}else addDoc(collection(db,"posts"),{user,avatar,text,photo:"",like:0});
 }
-};
 
-/* 📡 SHAKE */
+/* SHAKE + Radar */
 let lastShake=0;
+window.enableMotion=async()=>{
+if(typeof DeviceMotionEvent!=="undefined" && typeof DeviceMotionEvent.requestPermission==="function"){
+let res=await DeviceMotionEvent.requestPermission();
+if(res==="granted") alert("Shake enabled ✅");
+}
+};
 
 window.addEventListener("devicemotion",(e)=>{
-let a=e.accelerationIncludingGravity;
-if(!a) return;
-
+let a=e.accelerationIncludingGravity;if(!a)return;
 let power=Math.abs(a.x)+Math.abs(a.y)+Math.abs(a.z);
-
-if(power>25){
-if(Date.now()-lastShake<3000) return;
-lastShake=Date.now();
-startRadar();
-}
+if(power>25 && Date.now()-lastShake>3000){lastShake=Date.now();startRadar();}
 });
 
 async function startRadar(){
-let radar=document.getElementById("radarBox");
-radar.style.display="block";
-radar.innerText="📡 Searching...";
-
-await addDoc(collection(db,"radar"),{
-user:username,
-time:Date.now()
-});
-
+document.getElementById("radarBox").style.display="block";
+document.getElementById("radarBox").innerText="📡 Searching...";
+await addDoc(collection(db,"radar"),{user,time:Date.now()});
 onSnapshot(collection(db,"radar"),snap=>{
-snap.forEach(d=>{
-let data=d.data();
-
-if(data.user!==username && Date.now()-data.time<5000){
-radar.innerText="✅ CONNECTED WITH "+data.user;
-
-startChat(data.user);
-
-setTimeout(()=>radar.style.display="none",3000);
+snap.forEach(doc=>{let d=doc.data();
+if(d.user!==username && Date.now()-d.time<5000){ 
+document.getElementById("radarBox").innerText="✅ CONNECTED WITH "+d.user;
+startChat(d.user);
+setTimeout(()=>document.getElementById("radarBox").style.display="none",3000);
+compassTo(d.user); // NEW FEATURE
 }
 });
 });
 }
 
-/* 📏 расстояние */
-function dist(a,b){
-let R=6371;
-let dLat=(b.lat-a.lat)*Math.PI/180;
-let dLon=(b.lon-a.lon)*Math.PI/180;
-
-let x=Math.sin(dLat/2)**2+
-Math.cos(a.lat*Math.PI/180)*
-Math.cos(b.lat*Math.PI/180)*
-Math.sin(dLon/2)**2;
-
-return 2*R*Math.atan2(Math.sqrt(x),Math.sqrt(1-x))*1000;
-}
-
-/* 👥 nearby */
+/* Nearby list */
 window.toggleNearby=()=>{
 let box=document.getElementById("nearbyBox");
-box.style.display = box.style.display==="none" ? "block":"none";
+box.style.display=box.style.display==="none"?"block":"none";
 };
-
 onSnapshot(collection(db,"geo"),snap=>{
-let list=document.getElementById("nearbyList");
-list.innerHTML="";
-
+let list=document.getElementById("nearbyList"); list.innerHTML="";
 snap.forEach(doc=>{
 let d=doc.data();
-
 if(d.user!==username && myPos){
-
 let distance=dist(myPos,{lat:d.lat,lon:d.lon});
-
 if(distance<100){
-
 let div=document.createElement("div");
-div.innerHTML=`
-${d.user} (${Math.floor(distance)}m)
-<button onclick="connectUser('${d.user}')">CONNECT</button>
-`;
-
+div.innerHTML=`${d.user} (${Math.floor(distance)}m) <button onclick="connectUser('${d.user}')">CONNECT</button>`;
 list.append(div);
 }
 }
 });
 });
 
-/* 🤝 connect */
-window.connectUser=(user)=>{
-startChat(user);
-};
-
-/* 💬 чат */
-function chatId(a,b){
-return [a,b].sort().join("_");
-}
-
+/* Connect + Chat */
+window.connectUser=(user)=>{startChat(user);}
+function chatId(a,b){return [a,b].sort().join("_");}
 function startChat(user){
 currentChat=chatId(username,user);
-
 document.getElementById("chat").style.display="flex";
-
 onSnapshot(collection(db,"messages"),snap=>{
-let box=document.getElementById("messages");
-box.innerHTML="";
-
+let box=document.getElementById("messages"); box.innerHTML="";
 snap.forEach(doc=>{
 let d=doc.data();
-
-if(d.chat===currentChat){
-let div=document.createElement("div");
-div.innerText=d.user+": "+d.text;
-box.append(div);
-}
+if(d.chat===currentChat){let div=document.createElement("div"); div.innerText=d.user+": "+d.text; box.append(div);}
 });
 });
 }
-
 window.sendMsg=()=>{
 let text=document.getElementById("msg").value;
-
-addDoc(collection(db,"messages"),{
-chat:currentChat,
-user:username,
-text:text,
-time:Date.now()
-});
-
+addDoc(collection(db,"messages"),{chat:currentChat,user:username,text,time:Date.now()});
 document.getElementById("msg").value="";
 };
 
-</script>
+/* Distance function */
+function dist(a,b){
+let R=6371; let dLat=(b.lat-a.lat)*Math.PI/180; let dLon=(b.lon-a.lon)*Math.PI/180;
+let x=Math.sin(dLat/2)**2 + Math.cos(a.lat*Math.PI/180)*Math.cos(b.lat*Math.PI/180)*Math.sin(dLon/2)**2;
+return 2*R*Math.atan2(Math.sqrt(x),Math.sqrt(1-x))*1000;
+}
 
+/* NEW FEATURE: Compass arrow */
+function compassTo(targetUser){
+onSnapshot(collection(db,"geo"),snap=>{
+snap.forEach(doc=>{
+let d=doc.data();
+if(d.user===targetUser && myPos){
+let dx=d.lon-myPos.lon;
+let dy=d.lat-myPos.lat;
+let angle=Math.atan2(dx,dy)*180/Math.PI;
+let arrow=document.getElementById("compassArrow");
+arrow.style.transform=`rotate(${angle}deg)`;
+arrow.style.display="block";
+}
+});
+});
+}
+</script>
 </body>
 </html>
