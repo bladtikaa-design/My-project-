@@ -3,63 +3,18 @@
 <head>
 <meta charset="UTF-8">
 <title>BLADTIK SITE</title>
-
 <style>
-body{
-  margin:0;
-  font-family:sans-serif;
-  text-align:center;
-  background:#f0f0f0;
-}
-.dark{ background:#000; color:white; }
-#animatedText{
-  font-size:28px;
-  font-weight:bold;
-  color:#00ff00;
-  animation:glow 2s infinite alternate;
-}
-@keyframes glow{
-  0%{color:#00ff00;}
-  50%{color:#55ff55;}
-  100%{color:#007700;}
-}
-/* 💎 таймер */
-#cooldownTimer{
-  position:fixed;
-  top:20px;
-  left:50%;
-  transform:translateX(-50%);
-  padding:12px 25px;
-  border-radius:30px;
-  background:rgba(255,255,255,0.15);
-  backdrop-filter:blur(12px);
-  color:#00ffcc;
-  font-weight:bold;
-  display:none;
-  z-index:999;
-}
-/* 🔥 hashtags */
-#hashtagsBox{
-  position:fixed;
-  top:100px;
-  left:50%;
-  transform:translateX(-50%);
-  background:rgba(0,0,0,0.7);
-  color:white;
-  padding:20px;
-  border-radius:15px;
-  backdrop-filter:blur(10px);
-  max-width:300px;
-  display:none;
-  z-index:1000;
-}
+body{margin:0;font-family:sans-serif;text-align:center;background:#f0f0f0;}
+.dark{background:#000;color:white;}
+#animatedText{font-size:28px;font-weight:bold;color:#00ff00;animation:glow 2s infinite alternate;}
+@keyframes glow{0%{color:#00ff00;}50%{color:#55ff55;}100%{color:#007700;}}
+#cooldownTimer{position:fixed;top:20px;left:50%;transform:translateX(-50%);padding:12px 25px;border-radius:30px;background:rgba(255,255,255,0.15);backdrop-filter:blur(12px);color:#00ffcc;font-weight:bold;display:none;z-index:999;}
+#hashtagsBox{position:fixed;top:100px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,0.7);color:white;padding:20px;border-radius:15px;backdrop-filter:blur(10px);max-width:300px;display:none;z-index:1000;}
 #closeTags{position:absolute;top:8px;right:12px;cursor:pointer;font-size:18px;}
 #tagsContent{margin-top:10px;}
-/* космос */
 #stars{position:fixed;width:100%;height:100%;z-index:-1;}
 .star{position:absolute;width:3px;height:3px;background:white;border-radius:50%;animation:move 8s linear infinite;}
-@keyframes move{from{transform:translateY(-10px)} to{transform:translateY(100vh)}}
-/* пост */
+@keyframes move{from{transform:translateY(-10px)}to{transform:translateY(100vh)}}
 .post{background:white;max-width:400px;margin:10px auto;padding:10px;border-radius:12px;position:relative;}
 .dark .post{background:#111;}
 .avatar{width:40px;height:40px;border-radius:50%;cursor:pointer;}
@@ -67,83 +22,28 @@ body{
 .like{border:none;padding:6px 12px;border-radius:10px;cursor:pointer;}
 .deleteBtn{position:absolute;top:8px;right:8px;background:red;color:white;border:none;border-radius:10px;padding:5px 8px;cursor:pointer;font-size:16px;}
 .mainBtn{border:none;padding:10px 15px;border-radius:20px;cursor:pointer;margin:5px;}
-/* liquid glass */
-#profileButton{
-  position:fixed;
-  bottom:20px;
-  right:20px;
-  width:200px;
-  height:60px;
-  border-radius:40px;
-  background:rgba(255,255,255,0.15);
-  backdrop-filter:blur(10px);
-  display:flex;
-  align-items:center;
-  gap:10px;
-  padding-left:10px;
-  cursor:pointer;
-}
+#profileButton{position:fixed;bottom:20px;right:20px;width:200px;height:60px;border-radius:40px;background:rgba(255,255,255,0.15);backdrop-filter:blur(10px);display:flex;align-items:center;gap:10px;padding-left:10px;cursor:pointer;}
 #profileButton img{width:45px;height:45px;border-radius:50%;}
-/* профиль */
-#profile{
-  position:fixed;
-  top:0;
-  left:0;
-  width:100%;
-  height:100%;
-  background:black;
-  color:white;
-  display:none;
-  padding:20px;
-  overflow:auto;
-  z-index:1001;
-}
+#profile{position:fixed;top:0;left:0;width:100%;height:100%;background:black;color:white;display:none;padding:20px;overflow:auto;z-index:1001;}
 #close{position:absolute;top:20px;right:20px;font-size:30px;cursor:pointer;}
 #avatar{width:100px;height:100px;border-radius:50%;border:3px solid white;}
 #subscribe,#dm{border:none;padding:10px 15px;border-radius:20px;margin:5px;cursor:pointer;}
-/* чат */
 #chat{position:fixed;bottom:0;right:0;width:300px;height:350px;background:white;display:none;flex-direction:column;z-index:1001;}
 #messages{flex:1;overflow:auto;color:black;}
-/* радар */
-#radarBox{
-  position:fixed;
-  top:80px;
-  right:20px;
-  width:180px;
-  height:180px;
-  border-radius:50%;
-  background:rgba(0,0,0,0.3);
-  backdrop-filter:blur(8px);
-  border:2px solid #00ffcc;
-  display:none;
-  flex-direction:column;
-  align-items:center;
-  justify-content:center;
-  color:white;
-  padding:10px;
-  z-index:1002;
-}
+#radarBox{position:fixed;top:80px;right:20px;width:200px;height:200px;border-radius:50%;background:rgba(0,0,0,0.3);backdrop-filter:blur(8px);border:2px solid #00ffcc;display:none;flex-direction:column;align-items:center;justify-content:center;color:white;padding:10px;z-index:1002;}
 #radarBox h4{margin:0 0 5px 0;}
 #nearbyList{font-size:12px;text-align:left;max-height:120px;overflow:auto;width:100%;}
-/* 🌀 екран завантаження */
-#loadingScreen{
-  position:fixed;top:0;left:0;width:100%;height:100%;
-  background:black;color:white;
-  display:flex;flex-direction:column;justify-content:center;align-items:center;
-  z-index:1000;
-}
+#loadingScreen{position:fixed;top:0;left:0;width:100%;height:100%;background:black;color:white;display:flex;flex-direction:column;justify-content:center;align-items:center;z-index:1000;}
 #loaderDots{display:flex;gap:15px;margin-bottom:20px;}
 .dot{width:15px;height:15px;background:white;border-radius:50%;animation:dotMove 1.5s infinite ease-in-out;}
-.dot:nth-child(2){ animation-delay:0.3s; }
-.dot:nth-child(3){ animation-delay:0.6s; }
+.dot:nth-child(2){animation-delay:0.3s;}
+.dot:nth-child(3){animation-delay:0.6s;}
 @keyframes dotMove{0%,80%,100%{transform:scale(0);}40%{transform:scale(1);}}
 #loadingText{font-size:20px;font-weight:bold;color:#fff;}
 </style>
 </head>
-
 <body>
 
-<!-- Loading screen -->
 <div id="loadingScreen">
   <div id="loaderDots"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>
   <div id="loadingText">Loading... wait 5 seconds</div>
@@ -153,7 +53,6 @@ body{
 <div id="animatedText">BLADTIK SITE OFFICIAL</div>
 <div id="cooldownTimer"></div>
 
-<!-- 🔥 hashtags -->
 <div id="hashtagsBox"><div id="closeTags" onclick="closeHashtags()">✖</div><div id="tagsContent"></div></div>
 
 <div id="login">
@@ -163,24 +62,12 @@ body{
 </div>
 
 <div id="app" style="display:none">
-  <div>
-    <img id="myavatar" class="avatar">
-    <b id="user"></b>
-    <button onclick="theme()">🌙</button>
-  </div>
-  <br>
+  <div><img id="myavatar" class="avatar"><b id="user"></b><button onclick="theme()">🌙</button></div><br>
   <input id="text" placeholder="Write post"><br><br>
   <input type="file" id="photo"><br><br>
   <button class="mainBtn" onclick="post()">Post</button>
   <button class="mainBtn" onclick="showHashtags()">🔥 Popular #</button>
   <div id="posts"></div>
-</div>
-
-<!-- liquid glass -->
-<div id="profileButton">
-<img id="profileBtnImg">
-<span>MY PROFILE</span>
-<button onclick="editAvatar()" style="margin-left:10px;padding:5px 10px;border-radius:12px;cursor:pointer;">Edit My Avatar</button>
 </div>
 
 <div id="profile">
@@ -195,48 +82,29 @@ body{
 
 <div id="chat">
 <div id="messages"></div>
-<input id="msg">
-<button onclick="sendMsg()">Send</button>
+<input id="msg"><button onclick="sendMsg()">Send</button>
 </div>
 
-<!-- Радар Nearby -->
 <div id="radarBox">
 <h4>Nearby Users</h4>
 <div id="nearbyList"></div>
 </div>
 
 <script type="module">
-
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app.js";
-import { getFirestore, collection, addDoc, onSnapshot, getDocs, query, where } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js";
+import { getFirestore, collection, addDoc, onSnapshot, getDocs, query, where, setDoc, doc } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js";
 
-const firebaseConfig={
-apiKey:"AIzaSyAE46",
-authDomain:"mysocial-dabdf.firebaseapp.com",
-projectId:"mysocial-dabdf"
-};
-
+const firebaseConfig={apiKey:"AIzaSyAE46",authDomain:"mysocial-dabdf.firebaseapp.com",projectId:"mysocial-dabdf"};
 const app=initializeApp(firebaseConfig);
 const db=getFirestore(app);
 
-let lastPostTime=0;
-let cooldownInterval=null;
-let hashtags={};
 let username=localStorage.getItem("username");
 let avatar=localStorage.getItem("avatar");
-let lastAvatarChange = localStorage.getItem("lastAvatarChange");
+let lastAvatarChange=localStorage.getItem("lastAvatarChange");
 let myPos={lat:0,lon:0};
 
-// 🌌 космос
-for(let i=0;i<120;i++){
-  let s=document.createElement("div");
-  s.className="star";
-  s.style.left=Math.random()*100+"%";
-  s.style.top=Math.random()*100+"%";
-  document.getElementById("stars").appendChild(s);
-}
-
-// Login
+// Stars
+for(let i=0;i<120;i++){let s=document.createElement("div");s.className="star";s.style.left=Math.random()*100+"%";s.style.top=Math.random()*100+"%";document.getElementById("stars").appendChild(s);}
 if(username) start();
 
 window.login=function(){
@@ -259,12 +127,10 @@ function start(){
   document.getElementById("myavatar").src=avatar;
   document.getElementById("profileBtnImg").src=avatar;
 
-  // Watch position
   if(navigator.geolocation){
     navigator.geolocation.watchPosition(pos=>{
-      myPos={lat:pos.coords.latitude, lon:pos.coords.longitude};
-      const geoRef=collection(db,"geo");
-      addDoc(geoRef,{user:username,lat:myPos.lat,lon:myPos.lon,time:Date.now()});
+      myPos={lat:pos.coords.latitude,lon:pos.coords.longitude};
+      setDoc(doc(db,"geo",username),{user:username,lat:myPos.lat,lon:myPos.lon,time:Date.now()});
     });
   }
 
@@ -272,8 +138,8 @@ function start(){
   if(window.DeviceMotionEvent){
     let lastX=0,lastY=0,lastZ=0,lastTime=0;
     window.addEventListener('devicemotion',e=>{
-      let acc = e.accelerationIncludingGravity;
-      let curTime = Date.now();
+      let acc=e.accelerationIncludingGravity;
+      let curTime=Date.now();
       if(curTime-lastTime>500){
         let diff=Math.abs(acc.x-lastX)+Math.abs(acc.y-lastY)+Math.abs(acc.z-lastZ);
         if(diff>25){ showRadar(); }
@@ -283,7 +149,6 @@ function start(){
   }
 }
 
-// Radar
 function showRadar(){
   document.getElementById("radarBox").style.display="flex";
   updateNearby();
@@ -295,7 +160,7 @@ async function updateNearby(){
   let list = document.getElementById("nearbyList");
   list.innerHTML="";
   snap.forEach(d=>{
-    let data = d.data();
+    let data=d.data();
     if(data.user!==username && distance(myPos.lat,myPos.lon,data.lat,data.lon)<0.2){
       list.innerHTML+=`<div>${data.user} - CONNECTED</div>`;
     }
@@ -303,36 +168,23 @@ async function updateNearby(){
 }
 
 function distance(lat1,lon1,lat2,lon2){
-  let R = 6371;
-  let dLat = (lat2-lat1)*Math.PI/180;
-  let dLon = (lon2-lon1)*Math.PI/180;
-  let a = Math.sin(dLat/2)*Math.sin(dLat/2)+Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLon/2)*Math.sin(dLon/2);
+  let R=6371;
+  let dLat=(lat2-lat1)*Math.PI/180;
+  let dLon=(lon2-lon1)*Math.PI/180;
+  let a=Math.sin(dLat/2)**2+Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLon/2)**2;
   let c=2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a));
   return R*c; // km
 }
 
-// Theme
+// Theme toggle
 window.theme=function(){document.body.classList.toggle("dark");}
-
-// Timer
-function startCooldown(){
-  let t=document.getElementById("cooldownTimer");
-  clearInterval(cooldownInterval);
-  cooldownInterval=setInterval(()=>{
-    let left=20000-(Date.now()-lastPostTime);
-    if(left<=0){clearInterval(cooldownInterval); t.style.display="none"; return;}
-    t.innerText="You can post again in "+Math.ceil(left/1000)+"s";
-    t.style.display="block";
-  },200);
-}
 
 // Hide loading screen
 setTimeout(()=>{
   let ls=document.getElementById("loadingScreen");
   ls.style.transition="opacity 1s"; ls.style.opacity="0";
-  setTimeout(()=>{ ls.style.display="none"; },1000);
+  setTimeout(()=>{ls.style.display="none";},1000);
 },5000);
-
 </script>
 </body>
 </html>
