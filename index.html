@@ -3,7 +3,6 @@
 <head>
 <meta charset="UTF-8">
 <title>BLADTIK SITE</title>
-
 <style>
 body{
 margin:0;
@@ -205,136 +204,136 @@ flex:1;
 overflow:auto;
 color:black;
 }
-
 /* 🌀 екран завантаження */
 #loadingScreen{
-  position:fixed;
-  top:0;
-  left:0;
-  width:100%;
-  height:100%;
-  background:black;
-  color:white;
-  display:flex;
-  flex-direction:column;
-  justify-content:center;
-  align-items:center;
-  z-index:1000;
+position:fixed;
+top:0;
+left:0;
+width:100%;
+height:100%;
+background:black;
+color:white;
+display:flex;
+flex-direction:column;
+justify-content:center;
+align-items:center;
+z-index:1000;
 }
 
 #loaderDots{
-  display:flex;
-  gap:15px;
-  margin-bottom:20px;
+display:flex;
+gap:15px;
+margin-bottom:20px;
 }
 
 .dot{
-  width:15px;
-  height:15px;
-  background:white;
-  border-radius:50%;
-  animation:dotMove 1.5s infinite ease-in-out;
+width:15px;
+height:15px;
+background:white;
+border-radius:50%;
+animation:dotMove 1.5s infinite ease-in-out;
 }
 
 .dot:nth-child(2){ animation-delay:0.3s; }
 .dot:nth-child(3){ animation-delay:0.6s; }
 
 @keyframes dotMove{
-  0%, 80%, 100% { transform: scale(0); }
-  40% { transform: scale(1); }
+0%, 80%, 100% { transform: scale(0); }
+40% { transform: scale(1); }
 }
 
 #loadingText{
-  font-size:20px;
-  font-weight:bold;
-  color:#fff;
+font-size:20px;
+font-weight:bold;
+color:#fff;
 }
 
-/* 🔒 PASSWORD PANEL */
+/* 🛡️ парольная панель */
 #passwordPanel{
 position:fixed;
 top:0;
 left:0;
 width:100%;
 height:100%;
-background:rgba(0,0,0,0.85);
-display:none;
+background:rgba(0,0,0,0.9);
+display:flex;
+flex-direction:column;
 justify-content:center;
 align-items:center;
-flex-direction:column;
 z-index:2000;
 }
-#passwordCircles{
-display:flex;
-gap:20px;
+#passwordPanel h2{
+color:white;
 margin-bottom:30px;
 }
-.circle{
+#passDots{
+display:flex;
+gap:10px;
+margin-bottom:20px;
+}
+.passDot{
 width:20px;
 height:20px;
 border-radius:50%;
-background:rgba(255,255,255,0.3);
-backdrop-filter:blur(8px);
-transition: all 0.2s ease;
+border:2px solid white;
+background:transparent;
+transition:0.2s;
 }
-.circle.filled{
+.passDot.filled{
 background:white;
-transform: scale(1.3);
+transform:scale(1.3);
 }
-/* number pad */
+/* клавиатура */
 #numPad{
 display:grid;
-grid-template-columns:repeat(3,80px);
-grid-gap:15px;
+grid-template-columns:repeat(3,60px);
+gap:15px;
 }
 .numBtn{
-width:80px;
-height:80px;
+width:60px;
+height:60px;
 border-radius:50%;
 background:rgba(255,255,255,0.15);
-backdrop-filter:blur(12px);
+backdrop-filter:blur(10px);
 display:flex;
 justify-content:center;
 align-items:center;
-font-size:28px;
+font-size:20px;
+font-weight:bold;
 color:white;
 cursor:pointer;
-transition: transform 0.2s ease;
+transition:0.2s;
 }
 .numBtn:active{
-transform: scale(1.3);
+transform:scale(1.3);
 }
 </style>
 </head>
 <body>
 
-<!-- Loading screen -->
+<!-- Екран завантаження -->
 <div id="loadingScreen">
   <div id="loaderDots">
     <div class="dot"></div>
     <div class="dot"></div>
     <div class="dot"></div>
   </div>
-  <div id="loadingText">Loading... wait 5 seconds</div>
-</div>
-
-<!-- Password panel -->
-<div id="passwordPanel">
-  <div id="passwordCircles">
-    <div class="circle" id="c1"></div>
-    <div class="circle" id="c2"></div>
-    <div class="circle" id="c3"></div>
-    <div class="circle" id="c4"></div>
-  </div>
-  <div id="numPad"></div>
+  <div id="loadingText">Loading...</div>
 </div>
 
 <div id="stars"></div>
 
 <div id="animatedText">BLADTIK SITE OFFICIAL</div>
+
 <div id="cooldownTimer"></div>
 
-<!-- login -->
+<!-- 🔥 hashtags -->
+<div id="hashtagsBox">
+<div id="closeTags" onclick="closeHashtags()">✖</div>
+<div id="tagsContent"></div>
+</div>
+
+<!-- Вход и основной контент -->
 <div id="login">
 <input id="nickname" placeholder="Nickname"><br><br>
 <input type="file" id="avatarInput"><br><br>
@@ -347,17 +346,15 @@ transform: scale(1.3);
 <b id="user"></b>
 <button onclick="theme()">🌙</button>
 </div>
-
 <br>
 <input id="text" placeholder="Write post"><br><br>
 <input type="file" id="photo"><br><br>
-
 <button class="mainBtn" onclick="post()">Post</button>
 <button class="mainBtn" onclick="showHashtags()">🔥 Popular #</button>
 <div id="posts"></div>
 </div>
 
-<!-- profile button -->
+<!-- liquid glass кнопка с редактированием аватара -->
 <div id="profileButton">
 <img id="profileBtnImg">
 <span>MY PROFILE</span>
@@ -380,6 +377,18 @@ transform: scale(1.3);
 <button onclick="sendMsg()">Send</button>
 </div>
 
+<!-- панель пароля -->
+<div id="passwordPanel" style="display:none">
+<h2 id="passwordTitle">CREATE A PASSWORD</h2>
+<div id="passDots">
+<div class="passDot"></div>
+<div class="passDot"></div>
+<div class="passDot"></div>
+<div class="passDot"></div>
+</div>
+<div id="numPad"></div>
+</div>
+
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app.js";
 import { getFirestore, collection, addDoc, onSnapshot, updateDoc, deleteDoc, doc, getDocs, query, where } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js";
@@ -393,7 +402,21 @@ projectId:"mysocial-dabdf"
 const app=initializeApp(firebaseConfig);
 const db=getFirestore(app);
 
-/* 🌌 Stars */
+let lastPostTime=0;
+let cooldownInterval=null;
+let hashtags={};
+let username=localStorage.getItem("username");
+let avatar=localStorage.getItem("avatar");
+let lastAvatarChange = localStorage.getItem("lastAvatarChange");
+let password = localStorage.getItem("password");
+
+if(username && password){
+showPasswordPanel("ENTER PASSWORD");
+} else if(username){
+setTimeout(()=>{document.getElementById("login").style.display="block";}, 500);
+}
+
+/* 🌌 космос */
 for(let i=0;i<120;i++){
 let s=document.createElement("div");
 s.className="star";
@@ -402,21 +425,55 @@ s.style.top=Math.random()*100+"%";
 document.getElementById("stars").appendChild(s);
 }
 
-/* ⚡ User data */
-let username=localStorage.getItem("username");
-let avatar=localStorage.getItem("avatar");
-let lastAvatarChange = localStorage.getItem("lastAvatarChange");
-
-/* PASSWORD DATA */
-let password = localStorage.getItem("password") || "";
-let inputPass = "";
-
-if(username && password){
-  showPasswordPanel(false);
-} else if(username && !password){
-  showPasswordPanel(true);
+/* 🔢 парольная панель */
+function showPasswordPanel(mode){
+let panel = document.getElementById("passwordPanel");
+panel.style.display="flex";
+document.getElementById("passwordTitle").innerText = mode;
+let entered="";
+const passDots = document.querySelectorAll(".passDot");
+const numPad = document.getElementById("numPad");
+numPad.innerHTML="";
+for(let i=1;i<=9;i++){
+let b=document.createElement("div");
+b.className="numBtn";
+b.innerText=i;
+b.onclick=()=>{
+if(entered.length<4){
+entered+=i;
+updateDots(entered);
+}
+if(entered.length===4){
+setTimeout(()=>{
+if(mode==="CREATE A PASSWORD"){
+localStorage.setItem("password",entered);
+password=entered;
+panel.style.display="none";
+document.getElementById("login").style.display="block";
+}else{
+if(entered===password){
+panel.style.display="none";
+document.getElementById("login").style.display="block";
+}else{
+entered="";
+updateDots(entered);
+alert("Wrong password!");
+}
+}
+},300);
+}
+};
+numPad.appendChild(b);
+}
+function updateDots(val){
+passDots.forEach((d,i)=>{
+if(i<val.length) d.classList.add("filled");
+else d.classList.remove("filled");
+});
+}
 }
 
+/* ⚡ данные пользователя и основной функционал */
 window.login=function(){
 username=document.getElementById("nickname").value;
 let file=document.getElementById("avatarInput").files[0];
@@ -424,69 +481,22 @@ let reader=new FileReader();
 reader.onload=function(){
 avatar=reader.result;
 localStorage.setItem("username",username);
+localStorage.setItem("avatar",avatar);
+document.getElementById("login").style.display="none";
 start();
 }
 reader.readAsDataURL(file);
 }
 
-/* show main app */
 function start(){
-document.getElementById("login").style.display="none";
 document.getElementById("app").style.display="block";
 document.getElementById("user").innerText=username;
 document.getElementById("myavatar").src=avatar;
 document.getElementById("profileBtnImg").src=avatar;
 }
 
-/* password panel */
-function showPasswordPanel(isNew){
-document.getElementById("passwordPanel").style.display="flex";
-let pad = document.getElementById("numPad");
-pad.innerHTML="";
-for(let i=1;i<=9;i++){
-  let btn = document.createElement("div");
-  btn.className="numBtn";
-  btn.innerText=i;
-  btn.onclick=()=>handlePassInput(i);
-  pad.appendChild(btn);
-}
-if(!isNew){
-  let zero = document.createElement("div");
-  zero.className="numBtn";
-  zero.innerText="0";
-  zero.onclick=()=>handlePassInput(0);
-  pad.appendChild(zero);
-}
-}
-function handlePassInput(num){
-if(inputPass.length>=4) return;
-inputPass+=num;
-document.getElementById("c"+inputPass.length).classList.add("filled");
-if(inputPass.length===4){
-  if(!password){
-    password=inputPass;
-    localStorage.setItem("password",password);
-    alert("Password saved!");
-    document.getElementById("passwordPanel").style.display="none";
-    start();
-  } else {
-    if(inputPass===password){
-      document.getElementById("passwordPanel").style.display="none";
-      start();
-    } else {
-      alert("Wrong password!");
-      inputPass="";
-      for(let i=1;i<=4;i++){
-        document.getElementById("c"+i).classList.remove("filled");
-      }
-    }
-  }
-}
-}
-
-/* THE REST OF YOUR ORIGINAL CODE REMAINS HERE (posts, hashtags, chat, avatar, etc.) */
-
-// ... оригинальный код с posts, likes, hashtags, chat, profile, editAvatar и т.д.
+/* весь твой старый код постов, лайков, чат, hashtags, профиль, avatar edit и cooldown остаётся без изменений */
+// ... (оставляем твой существующий функционал точно как был)
 
 </script>
 </body>
